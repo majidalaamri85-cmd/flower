@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}المنتجات - إدارة المخزون{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">إدارة المنتجات</h2>
+    <div class="d-flex gap-2">
+        <a class="btn btn-warning" href="{% url 'inventory:low_stock' %}">منخفضة المخزون ({{ low_stock_count }})</a>
+        <a class="btn btn-danger" href="{% url 'inventory:expiring_flowers' %}">ينتهي قريبًا ({{ expiring_count }})</a>
+        <a class="btn btn-primary" href="{% url 'inventory:product_create' %}">منتج جديد</a>
+    </div>
+</div>
+
+<div class="card panel mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-5"><input class="form-control" name="search" value="{{ search|default:'' }}" placeholder="بحث بالاسم أو SKU أو باركود"></div>
+            <div class="col-md-3">
+                <select name="type" class="form-select">
+                    <option value="all">كل الأنواع</option>
+                    <option value="flower" {% if current_type == 'flower' %}selected{% endif %}>ورد</option>
+                    <option value="chocolate" {% if current_type == 'chocolate' %}selected{% endif %}>شوكولاته</option>
+                    <option value="gift" {% if current_type == 'gift' %}selected{% endif %}>هدايا</option>
+                </select>
+            </div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">تطبيق</button></div>
+            <div class="col-md-2"><a class="btn btn-light border w-100" href="{% url 'inventory:product_list' %}">إعادة ضبط</a></div>
+        </form>
+    </div>
+</div>
+
+<div class="card panel">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>المنتج</th>
+                        <th>النوع</th>
+                        <th>الكمية</th>
+                        <th>شراء</th>
+                        <th>بيع</th>
+                        <th>الهامش</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="{% if product.quantity <= product.min_stock %}table-warning{% endif %}">
+                        <td>
+                            <div class="fw-semibold">{{ product.name }}</div>
+                            <small class="text-muted">SKU: {{ product.sku }}</small>
+                        </td>
+                        <td>{{ product.get_type_display }}</td>
+                        <td>{{ product.quantity }}</td>
+                        <td>{{ product.purchase_price }}</td>
+                        <td>{{ product.selling_price }}</td>
+                        <td>{{ product.profit_margin|floatformat:1 }}%</td>
+                        <td>
+                            {% if product.is_expiring_soon %}<span class="badge bg-danger">ينتهي قريبًا</span>{% endif %}
+                            {% if product.quantity <= product.min_stock %}<span class="badge bg-warning text-dark">منخفض</span>{% endif %}
+                        </td>
+                        <td class="d-flex gap-1">
+                            <a class="btn btn-sm btn-outline-primary" href="{% url 'inventory:product_edit' product.id %}">تعديل</a>
+                            <a class="btn btn-sm btn-outline-info" href="{% url 'inventory:stock_adjust' product.id %}">مخزون</a>
+                            <a class="btn btn-sm btn-outline-danger" href="{% url 'inventory:product_delete' product.id %}">حذف</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center">لا توجد منتجات</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if products.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center mb-0">
+                {% if products.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}">السابق</a></li>
+                {% endif %}
+                {% for num in products.paginator.page_range %}
+                <li class="page-item {% if products.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endfor %}
+                {% if products.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}">التالي</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

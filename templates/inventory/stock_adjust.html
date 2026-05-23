@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}تعديل مخزون{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h3 class="mb-4">تعديل مخزون: {{ product.name }}</h3>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-primary">حفظ</button>
+            <a class="btn btn-light border" href="{% url 'inventory:product_list' %}">إلغاء</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

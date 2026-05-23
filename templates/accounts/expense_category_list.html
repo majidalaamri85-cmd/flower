@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}فئات المصروفات{% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card panel"><div class="card-body p-4">
+            <h4 class="mb-3">إضافة فئة</h4>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">اسم الفئة</label>
+                    {{ form.name }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">نوع الفئة</label>
+                    {{ form.category_type }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">الوصف</label>
+                    {{ form.description }}
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">أيقونة</label>
+                        {{ form.icon }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">لون</label>
+                        {{ form.color }}
+                    </div>
+                </div>
+                <div class="form-check mt-3">
+                    {{ form.is_active }}
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">فعالة</label>
+                </div>
+                <button class="btn btn-primary">حفظ</button>
+            </form>
+        </div></div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card panel"><div class="card-body p-4">
+            <h4 class="mb-3">الفئات الحالية</h4>
+            <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>الفئة</th>
+                        <th>النوع</th>
+                        <th>الإجمالي</th>
+                        <th>عدد العمليات</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for category in categories %}
+                    <tr>
+                        <td><span class="badge bg-{{ category.color }}"><i class="{{ category.icon }}"></i> {{ category.name }}</span></td>
+                        <td>{{ category.get_category_type_display }}</td>
+                        <td>{{ category.total_expenses }} ريال</td>
+                        <td>{{ category.expense_count }}</td>
+                        <td>{% if category.is_active %}<span class="text-success">فعالة</span>{% else %}<span class="text-danger">موقوفة</span>{% endif %}</td>
+                        <td><a href="{% url 'accounts:expense_category_edit' category.id %}" class="btn btn-sm btn-outline-primary">تعديل</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center">لا توجد فئات</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}إعدادات المحل{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h3 class="mb-4">إعدادات المحل</h3>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">اسم المحل</label><input class="form-control" name="shop_name" value="{{ settings.shop_name }}"></div>
+                <div class="col-md-6"><label class="form-label">الهاتف</label><input class="form-control" name="phone" value="{{ settings.phone }}"></div>
+                <div class="col-md-6"><label class="form-label">البريد</label><input class="form-control" name="email" value="{{ settings.email }}"></div>
+                <div class="col-md-6"><label class="form-label">العملة</label><input class="form-control" name="currency_symbol" value="{{ settings.currency_symbol }}"></div>
+                <div class="col-12"><label class="form-label">العنوان</label><textarea class="form-control" name="address" rows="3">{{ settings.address }}</textarea></div>
+                <div class="col-md-6"><label class="form-label">الرقم الضريبي</label><input class="form-control" name="tax_number" value="{{ settings.tax_number }}"></div>
+                <div class="col-md-6"><label class="form-label">الشعار</label><input class="form-control" type="file" name="shop_logo"></div>
+            </div>
+            <div class="mt-4"><button class="btn btn-primary">حفظ</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

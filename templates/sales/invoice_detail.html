@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}فاتورة {{ sale.invoice_number }}{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h3 class="mb-1">فاتورة {{ sale.invoice_number }}</h3>
+                <div class="text-muted">{{ sale.created_at }}</div>
+            </div>
+            <a class="btn btn-outline-primary" href="{% url 'sales:invoice_pdf' sale.invoice_number %}">تحميل PDF</a>
+        </div>
+        <p><strong>العميل:</strong> {{ sale.customer.name|default:'نقدي' }}</p>
+        <table class="table">
+            <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+            <tbody>
+            {% for item in sale.items.all %}
+                <tr><td>{{ item.product.name }}</td><td>{{ item.quantity }}</td><td>{{ item.unit_price }}</td><td>{{ item.total }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="text-end">
+            <div>المجموع الفرعي: {{ sale.subtotal }}</div>
+            <div>الخصم: {{ sale.discount }}</div>
+            <div>الضريبة: {{ sale.tax }}</div>
+            <div><strong>الإجمالي: {{ sale.total }}</strong></div>
+            <div>المدفوع: {{ sale.paid_amount }}</div>
+            <div>الباقي: {{ sale.change_amount }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

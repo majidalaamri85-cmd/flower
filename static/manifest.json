@@ -1,0 +1,11 @@
+{
+  "name": "نظام إدارة محل الورد والشوكولاته",
+  "short_name": "Shop Manager",
+  "description": "نظام إدارة متكامل يعمل دون إنترنت",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1d4ed8",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "icons": []
+}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}المنتجات منخفضة المخزون{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h3 class="mb-3">المنتجات منخفضة المخزون</h3>
+        <table class="table table-striped">
+            <thead><tr><th>المنتج</th><th>الكمية الحالية</th><th>الحد الأدنى</th></tr></thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.quantity }}</td>
+                    <td>{{ product.min_stock }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center">لا توجد تنبيهات حالياً</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

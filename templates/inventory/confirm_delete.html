@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}تأكيد الحذف{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h3 class="mb-3">تأكيد الحذف</h3>
+        <p>هل تريد حذف: <strong>{{ object }}</strong> ؟</p>
+        <form method="post">
+            {% csrf_token %}
+            <button class="btn btn-danger">حذف</button>
+            <a class="btn btn-secondary" href="{% url back_url %}">إلغاء</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

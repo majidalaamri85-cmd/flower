@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}الفواتير{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h3 class="mb-3">الفواتير</h3>
+        <table class="table">
+            <thead><tr><th>الرقم</th><th>العميل</th><th>الإجمالي</th><th>التاريخ</th></tr></thead>
+            <tbody>
+            {% for sale in invoices %}
+                <tr>
+                    <td><a href="{% url 'sales:invoice_detail' sale.invoice_number %}">{{ sale.invoice_number }}</a></td>
+                    <td>{{ sale.customer.name|default:'نقدي' }}</td>
+                    <td>{{ sale.total }}</td>
+                    <td>{{ sale.created_at }}</td>
+                </tr>
+            {% empty %}<tr><td colspan="4">لا توجد فواتير</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

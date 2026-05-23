@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}سجل حركة المخزون{% endblock %}
+{% block content %}
+<div class="card panel mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <select name="product" class="form-select">
+                    <option value="">كل المنتجات</option>
+                    {% for product in products %}<option value="{{ product.id }}">{{ product.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2"><select name="type" class="form-select"><option value="">كل الحركات</option><option value="in">داخل</option><option value="out">خارج</option><option value="adjust">تعديل</option><option value="waste">تالف</option></select></div>
+            <div class="col-md-2"><input name="date_from" type="date" class="form-control"></div>
+            <div class="col-md-2"><input name="date_to" type="date" class="form-control"></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">تصفية</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card panel">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead><tr><th>المنتج</th><th>النوع</th><th>الكمية</th><th>المرجع</th><th>المستخدم</th><th>التاريخ</th></tr></thead>
+            <tbody>
+                {% for movement in movements %}
+                <tr>
+                    <td>{{ movement.product.name }}</td>
+                    <td>{{ movement.get_movement_type_display }}</td>
+                    <td>{{ movement.quantity }}</td>
+                    <td>{{ movement.reference }}</td>
+                    <td>{{ movement.created_by.username|default:'-' }}</td>
+                    <td>{{ movement.created_at|date:'Y-m-d H:i' }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center">لا توجد حركات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

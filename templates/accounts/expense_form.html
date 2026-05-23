@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}{{ title|default:'إضافة مصروف' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+	.expense-stats {
+		background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+		color: #fff;
+		border-radius: 14px;
+		padding: 20px;
+		margin-bottom: 16px;
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+	<div class="row g-3">
+		<div class="col-lg-8">
+			<div class="card panel">
+				<div class="card-body p-4">
+					<h5 class="mb-4"><i class="fas fa-plus-circle"></i> {{ title|default:'إضافة مصروف' }}</h5>
+					<form method="post" enctype="multipart/form-data" id="expenseForm">
+						{% csrf_token %}
+
+						<div class="mb-3">
+							<label class="form-label fw-semibold">فئة المصروف</label>
+							{{ form.category }}
+							<small class="text-muted">اختر فئة المصروف المناسبة</small>
+							<div id="categoryDetails" class="alert alert-info mt-2" style="display:none;">
+								<span id="categoryDescription"></span>
+							</div>
+							{% if form.category.errors %}<div class="text-danger small mt-1">{{ form.category.errors|join:', ' }}</div>{% endif %}
+						</div>
+
+						<div class="row g-3">
+							<div class="col-md-6">
+								<label class="form-label fw-semibold">المبلغ</label>
+								<div class="input-group">
+									<span class="input-group-text">ريال</span>
+									{{ form.amount }}
+								</div>
+								{% if form.amount.errors %}<div class="text-danger small mt-1">{{ form.amount.errors|join:', ' }}</div>{% endif %}
+							</div>
+							<div class="col-md-6">
+								<label class="form-label fw-semibold">تاريخ المصروف</label>
+								{{ form.expense_date }}
+								{% if form.expense_date.errors %}<div class="text-danger small mt-1">{{ form.expense_date.errors|join:', ' }}</div>{% endif %}
+							</div>
+						</div>
+
+						<div class="mt-3">
+							<label class="form-label fw-semibold">وصف المصروف</label>
+							{{ form.description }}
+						</div>
+
+						<div class="row g-3 mt-1">
+							<div class="col-md-6">
+								<label class="form-label fw-semibold">طريقة الدفع</label>
+								{{ form.payment_method }}
+							</div>
+							<div class="col-md-6">
+								<label class="form-label fw-semibold">رقم الإيصال</label>
+								{{ form.receipt_number }}
+							</div>
+						</div>
+
+						<div class="mt-3">
+							<label class="form-label fw-semibold">إرفاق الإيصال</label>
+							{{ form.receipt }}
+							<small class="text-muted">الأنواع المدعومة: PDF, JPG, PNG - الحد الأقصى 5MB</small>
+						</div>
+
+						<div class="mt-3">
+							<label class="form-label fw-semibold">ملاحظات</label>
+							{{ form.notes }}
+						</div>
+
+						<div class="text-end mt-4 d-flex gap-2 justify-content-end">
+							<a href="{% url 'accounts:expense_list' %}" class="btn btn-secondary">إلغاء</a>
+							<button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ المصروف</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-lg-4">
+			<div class="expense-stats">
+				<h6><i class="fas fa-chart-line"></i> إحصائيات سريعة</h6>
+				<hr>
+				<div>إجمالي هذا الشهر: <strong>{{ month_expenses|default:'0' }} ريال</strong></div>
+			</div>
+
+			<div class="card panel">
+				<div class="card-body">
+					<h6 class="mb-3">الفئات الأكثر استخداما</h6>
+					{% for stat in categories_stats %}
+					<div class="d-flex justify-content-between small border-bottom py-2">
+						<span>{{ stat.name }}</span>
+						<span class="text-muted">{{ stat.month_total }} ريال</span>
+					</div>
+					{% empty %}
+					<p class="text-muted mb-0">لا توجد إحصائيات حتى الآن</p>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	const categorySelect = document.getElementById('expenseCategory');
+	const amountField = document.getElementById('id_amount');
+	const receiptField = document.getElementById('id_receipt');
+	const detailsDiv = document.getElementById('categoryDetails');
+	const descSpan = document.getElementById('categoryDescription');
+
+	if (categorySelect) {
+		categorySelect.addEventListener('change', function () {
+			const categoryId = this.value;
+			if (!categoryId) {
+				detailsDiv.style.display = 'none';
+				return;
+			}
+
+			fetch(`/accounts/category/${categoryId}/details/`)
+				.then(response => response.json())
+				.then(data => {
+					if (!data.success) {
+						detailsDiv.style.display = 'none';
+						return;
+					}
+					descSpan.innerHTML = `<strong>${data.category.name}</strong><br>${data.category.description || 'لا يوجد وصف'}`;
+					detailsDiv.style.display = 'block';
+					if (amountField && !amountField.value && data.category.avg_amount > 0) {
+						amountField.placeholder = `المتوسط السابق: ${data.category.avg_amount.toFixed(2)} ريال`;
+					}
+				})
+				.catch(() => {
+					detailsDiv.style.display = 'none';
+				});
+		});
+	}
+
+	if (amountField) {
+		amountField.addEventListener('input', function () {
+			const value = parseFloat(this.value || '0');
+			if (value < 0) {
+				this.value = '0';
+				alert('المبلغ لا يمكن أن يكون سالبا');
+			}
+		});
+	}
+
+	if (receiptField) {
+		receiptField.addEventListener('change', function () {
+			const file = this.files[0];
+			if (!file) {
+				return;
+			}
+			const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+			if (!allowedTypes.includes(file.type)) {
+				alert('نوع الملف غير مدعوم. استخدم JPG أو PNG أو PDF');
+				this.value = '';
+				return;
+			}
+			if (file.size > 5 * 1024 * 1024) {
+				alert('حجم الملف أكبر من 5MB');
+				this.value = '';
+			}
+		});
+	}
+});
+</script>
+{% endblock %}

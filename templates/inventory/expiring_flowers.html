@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}الورود التي تنتهي قريباً{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h3 class="mb-3">الورود التي تنتهي خلال 24 ساعة</h3>
+        <table class="table table-striped">
+            <thead><tr><th>المنتج</th><th>تاريخ القطف</th><th>الساعات المتبقية</th></tr></thead>
+            <tbody>
+                {% for row in expiring_flowers %}
+                <tr>
+                    <td>{{ row.product.name }}</td>
+                    <td>{{ row.product.harvest_date }}</td>
+                    <td>{{ row.hours_left|floatformat:1 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center">لا توجد منتجات قريبة من انتهاء الصلاحية</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

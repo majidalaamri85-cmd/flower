@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1d4ed8">
+    <link rel="manifest" href="/static/manifest.json">
+    <title>{% block title %}نظام إدارة المحل{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        body { background: #f6f7fb; }
+        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #17324d, #0f172a); }
+        .sidebar .nav-link { color: #e2e8f0; border-radius: 12px; margin: 4px 0; padding: 10px 14px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,.1); color: #fff; }
+        .panel { border: 0; border-radius: 18px; box-shadow: 0 10px 30px rgba(15,23,42,.08); }
+        .hero-card { background: linear-gradient(135deg, #0f172a, #1d4ed8); color: #fff; border-radius: 20px; }
+        .btn-primary { background: #1d4ed8; border-color: #1d4ed8; }
+        .table thead th { background: #e2e8f0; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+<div class="container-fluid">
+    <div class="row">
+        <aside class="col-lg-2 col-md-3 sidebar p-3">
+            <div class="text-center text-white py-3 mb-3">
+                <h5 class="mb-1">{{ settings.shop_name|default:"نظام المحل" }}</h5>
+                <small class="text-white-50">{{ user.username }}</small>
+            </div>
+            <nav class="nav flex-column">
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}"><i class="fa-solid fa-gauge-high ms-2"></i>لوحة التحكم</a>
+                <a class="nav-link {% if request.resolver_match.app_name == 'sales' and request.resolver_match.url_name == 'pos' %}active{% endif %}" href="{% url 'sales:pos' %}"><i class="fa-solid fa-cash-register ms-2"></i>نقطة البيع</a>
+                <a class="nav-link {% if request.resolver_match.app_name == 'sales' and request.resolver_match.url_name == 'pos_offline' %}active{% endif %}" href="{% url 'sales:pos_offline' %}"><i class="fa-solid fa-plug-circle-xmark ms-2"></i>نقطة بيع Offline</a>
+                <a class="nav-link" href="{% url 'inventory:product_list' %}"><i class="fa-solid fa-boxes-stacked ms-2"></i>المنتجات</a>
+                <a class="nav-link" href="{% url 'sales:invoice_list' %}"><i class="fa-solid fa-receipt ms-2"></i>الفواتير</a>
+                <a class="nav-link" href="{% url 'accounts:expense_list' %}"><i class="fa-solid fa-wallet ms-2"></i>المصروفات</a>
+                <a class="nav-link" href="{% url 'reports:daily' %}"><i class="fa-solid fa-chart-column ms-2"></i>التقارير</a>
+                <a class="nav-link" href="{% url 'core:settings' %}"><i class="fa-solid fa-gear ms-2"></i>الإعدادات</a>
+                <a class="nav-link text-danger" href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket ms-2"></i>تسجيل خروج</a>
+            </nav>
+        </aside>
+        <main class="col-lg-10 col-md-9 p-4">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+                {% endfor %}
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% else %}
+    {% block login_content %}{% endblock %}
+{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

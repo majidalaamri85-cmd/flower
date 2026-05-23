@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}إضافة مستخدم{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h3 class="mb-4">إضافة مستخدم جديد</h3>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="mb-3">
+                <label class="form-label">المجموعة</label>
+                <select name="group" class="form-select">
+                    <option value="">بدون مجموعة</option>
+                    {% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <button class="btn btn-primary">حفظ</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

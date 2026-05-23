@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}تأكيد حذف منتج{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h3 class="mb-3">تأكيد الحذف</h3>
+        <p>سيتم تعطيل المنتج التالي ولن يظهر في القوائم: <strong>{{ product.name }}</strong></p>
+        <form method="post">
+            {% csrf_token %}
+            <button class="btn btn-danger">تأكيد الحذف</button>
+            <a class="btn btn-light border" href="{% url 'inventory:product_list' %}">إلغاء</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

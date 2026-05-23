@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">{{ title }}</h3>
+            {% block list_actions %}{% endblock %}
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <tbody>
+                {% for item in items %}
+                    <tr><td>{{ item }}</td></tr>
+                {% empty %}
+                    <tr><td>لا توجد بيانات</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

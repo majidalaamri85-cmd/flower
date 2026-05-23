@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}التقرير الشهري{% endblock %}
+{% block content %}
+<div class="card panel mb-3"><div class="card-body">
+    <form method="get" class="row g-2">
+        <div class="col-md-3"><select name="month" class="form-select">{% for m in months %}<option value="{{ m }}" {% if current_month == m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div>
+        <div class="col-md-3"><select name="year" class="form-select">{% for y in years %}<option value="{{ y }}" {% if current_year == y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">عرض</button></div>
+    </form>
+</div></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4"><div class="card panel"><div class="card-body">إجمالي المبيعات: <strong>{{ total_sales }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel"><div class="card-body">إجمالي المصروفات: <strong>{{ total_expenses }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel"><div class="card-body">صافي الربح: <strong>{{ net_profit }}</strong></div></div></div>
+</div>
+
+<div class="card panel"><div class="card-body">
+    <h5 class="mb-3">أفضل العملاء</h5>
+    <table class="table table-striped">
+        <thead><tr><th>العميل</th><th>إجمالي الإنفاق</th><th>عدد المشتريات</th></tr></thead>
+        <tbody>
+        {% for customer in top_customers %}
+            <tr><td>{{ customer.customer__name|default:'نقدي' }}</td><td>{{ customer.total_spent }}</td><td>{{ customer.purchase_count }}</td></tr>
+        {% empty %}<tr><td colspan="3">لا توجد بيانات</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div></div>
+{% endblock %}

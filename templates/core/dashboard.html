@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block content %}
+<div class="hero-card p-4 mb-4">
+    <h2 class="mb-1">لوحة التحكم</h2>
+    <p class="mb-0">ملخص سريع للمبيعات والمخزون والمصروفات.</p>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card panel"><div class="card-body"><small class="text-muted">مبيعات اليوم</small><h4 class="mt-2">{{ today_total }} ريال</h4><div class="text-muted">{{ today_count }} فاتورة</div></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body"><small class="text-muted">صافي الربح اليوم</small><h4 class="mt-2">{{ today_profit }} ريال</h4><div class="text-muted">المصروفات: {{ today_expenses }} ريال</div></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body"><small class="text-muted">منخفض المخزون</small><h4 class="mt-2">{{ low_stock_count }}</h4><div class="text-muted">منتجات تحتاج إعادة طلب</div></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body"><small class="text-muted">الورود القريبة من الانتهاء</small><h4 class="mt-2">{{ expiring_flowers_count }}</h4><div class="text-muted">خلال الفترة الحالية</div></div></div></div>
+</div>
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card panel h-100"><div class="card-header bg-white border-0 pt-3"><strong>أحدث الفواتير</strong></div><div class="card-body">
+            <div class="table-responsive"><table class="table align-middle"><thead><tr><th>الرقم</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody>
+            {% for sale in recent_sales %}
+                <tr><td><a href="{% url 'sales:invoice_detail' sale.invoice_number %}">{{ sale.invoice_number }}</a></td><td>{{ sale.customer.name|default:'نقدي' }}</td><td>{{ sale.total }}</td></tr>
+            {% empty %}
+                <tr><td colspan="3">لا توجد فواتير بعد</td></tr>
+            {% endfor %}
+            </tbody></table></div>
+        </div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card panel h-100"><div class="card-header bg-white border-0 pt-3"><strong>تنبيهات المخزون</strong></div><div class="card-body">
+            {% for product in low_stock_list %}
+                <div class="d-flex justify-content-between border-bottom py-2"><span>{{ product.name }}</span><span class="badge bg-danger">{{ product.quantity }}</span></div>
+            {% empty %}
+                <p class="mb-0">جميع المنتجات ضمن المستوى الآمن.</p>
+            {% endfor %}
+        </div></div>
+    </div>
+</div>
+{% endblock %}

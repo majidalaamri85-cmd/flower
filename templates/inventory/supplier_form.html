@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ title|default:'إضافة مورد' }}{% endblock %}
+{% block content %}
+<div class="card panel">
+	<div class="card-body p-4">
+		<h3 class="mb-4">{{ title|default:'إضافة مورد' }}</h3>
+		<form method="post">
+			{% csrf_token %}
+			{{ form.as_p }}
+			<button class="btn btn-primary">حفظ</button>
+		</form>
+	</div>
+</div>
+{% endblock %}

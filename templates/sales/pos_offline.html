@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}نقطة البيع - Offline{% endblock %}
+
+{% block extra_css %}
+<style>
+    .offline-badge {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        z-index: 1200;
+        padding: 8px 16px;
+        border-radius: 999px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .offline-badge.online { background: #16a34a; }
+    .offline-badge.offline { background: #dc2626; }
+    .sync-progress {
+        position: fixed;
+        bottom: 14px;
+        right: 14px;
+        background: #fff;
+        border-radius: 10px;
+        padding: 10px 14px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
+        z-index: 1200;
+        display: none;
+    }
+    .pos-product-card { cursor: pointer; }
+    .pos-product-card:hover { transform: translateY(-2px); transition: transform 0.15s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="offline-badge" id="connectionStatus"><i class="fa-solid fa-wifi"></i> <span id="statusText">متصل</span></div>
+<div class="sync-progress" id="syncProgress">
+    <div class="d-flex align-items-center gap-2">
+        <span class="spinner-border spinner-border-sm"></span>
+        <span>جاري المزامنة...</span>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card panel">
+            <div class="card-body p-4">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6"><input type="text" id="searchInput" class="form-control" placeholder="بحث عن منتج..."></div>
+                    <div class="col-md-3">
+                        <select id="typeFilter" class="form-select">
+                            <option value="all">جميع المنتجات</option>
+                            <option value="flower">ورد</option>
+                            <option value="chocolate">شوكولاته</option>
+                            <option value="gift">هدايا</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3"><button class="btn btn-primary w-100" type="button" onclick="loadOfflineProducts()">تحديث</button></div>
+                </div>
+                <div id="productsContainer" class="row g-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card panel">
+            <div class="card-header"><strong>سلة المشتريات</strong></div>
+            <div class="card-body" style="max-height: 520px; overflow-y: auto;"><div id="cartItems"></div></div>
+            <div class="card-footer bg-white">
+                <div class="d-flex justify-content-between">
+                    <span>الإجمالي</span>
+                    <strong id="cartTotal">0 ريال</strong>
+                </div>
+                <button class="btn btn-success w-100 mt-3" type="button" onclick="processCheckout()">إنهاء الطلب</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/indexeddb.js' %}"></script>
+<script src="{% static 'js/offline-manager.js' %}"></script>
+<script>
+let cart = [];
+
+function updateConnectionStatus() {
+    const statusDiv = document.getElementById('connectionStatus');
+    const statusText = document.getElementById('statusText');
+    if (navigator.onLine) {
+        statusDiv.className = 'offline-badge online';
+        statusText.textContent = 'متصل';
+    } else {
+        statusDiv.className = 'offline-badge offline';
+        statusText.textContent = 'غير متصل';
+    }
+}
+
+function displayProducts(products) {
+    const container = document.getElementById('productsContainer');
+    container.innerHTML = '';
+    products.forEach((product) => {
+        const node = document.createElement('div');
+        node.className = 'col-md-4';
+        node.innerHTML = `
+            <div class="card panel pos-product-card h-100" onclick="addToCart(${product.id}, '${String(product.name).replace(/'/g, "\\'")}', ${product.selling_price})">
+                <div class="card-body text-center">
+                    <h6 class="mb-2">${product.name}</h6>
+                    <div class="text-primary mb-1">${product.selling_price} ريال</div>
+                    <small class="text-muted">المتوفر: ${product.quantity}</small>
+                </div>
+            </div>
+        `;
+        container.appendChild(node);
+    });
+}
+
+async function loadOfflineProducts() {
+    const products = await window.offlineManager.getOfflineProducts();
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const typeFilter = document.getElementById('typeFilter').value;
+
+    let filtered = products;
+    if (searchTerm) {
+        filtered = filtered.filter((p) => String(p.name).toLowerCase().includes(searchTerm));
+    }
+    if (typeFilter !== 'all') {
+        filtered = filtered.filter((p) => p.type === typeFilter);
+    }
+
+    displayProducts(filtered);
+}
+
+function addToCart(id, name, price) {
+    const existing = cart.find((item) => item.id === id);
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({ id, name, price: Number(price), quantity: 1 });
+    }
+    updateCartDisplay();
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartDisplay();
+}
+
+function updateCartDisplay() {
+    const cartItems = document.getElementById('cartItems');
+    const cartTotal = document.getElementById('cartTotal');
+    cartItems.innerHTML = '';
+
+    let total = 0;
+    cart.forEach((item, idx) => {
+        total += item.price * item.quantity;
+        cartItems.innerHTML += `
+            <div class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="fw-semibold">${item.name}</div>
+                        <small>${item.quantity} × ${item.price} = ${(item.quantity * item.price).toFixed(2)} ريال</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${idx})">حذف</button>
+                </div>
+            </div>
+        `;
+    });
+
+    cartTotal.textContent = `${total.toFixed(2)} ريال`;
+}
+
+async function processCheckout() {
+    if (!cart.length) {
+        alert('السلة فارغة');
+        return;
+    }
+
+    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const paidAmount = prompt('المبلغ المدفوع', total.toFixed(2));
+    if (!paidAmount || Number(paidAmount) < total) {
+        alert('المبلغ المدفوع أقل من الإجمالي');
+        return;
+    }
+
+    const saleData = {
+        items: cart.map((item) => ({ product_id: item.id, quantity: item.quantity, unit_price: item.price })),
+        subtotal: total,
+        discount: 0,
+        tax: 0,
+        total,
+        paid_amount: Number(paidAmount),
+        payment_method: 'cash',
+        timestamp: new Date().toISOString(),
+    };
+
+    const result = await window.offlineManager.saveSaleOffline(saleData);
+    if (result.success) {
+        alert(result.offline ? 'تم حفظ البيع محلياً وسيتم مزامنته لاحقاً' : 'تمت عملية البيع بنجاح');
+        cart = [];
+        updateCartDisplay();
+    } else {
+        alert('تعذر حفظ البيع');
+    }
+}
+
+window.addEventListener('online', updateConnectionStatus);
+window.addEventListener('offline', updateConnectionStatus);
+document.getElementById('searchInput').addEventListener('input', loadOfflineProducts);
+document.getElementById('typeFilter').addEventListener('change', loadOfflineProducts);
+
+updateConnectionStatus();
+loadOfflineProducts();
+</script>
+{% endblock %}

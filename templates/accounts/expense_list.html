@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}المصروفات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0"><i class="fas fa-wallet"></i> المصروفات</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'accounts:expense_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> مصروف جديد</a>
+        <a href="{% url 'accounts:expense_category_list' %}" class="btn btn-secondary"><i class="fas fa-tags"></i> إدارة الفئات</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card panel"><div class="card-body">إجمالي المصروفات<br><strong>{{ total_expenses }} ريال</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">هذا الشهر<br><strong>{{ month_expenses }} ريال</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">هذا الأسبوع<br><strong>{{ week_expenses }} ريال</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">عدد النتائج<br><strong>{{ expenses.paginator.count }}</strong></div></div></div>
+</div>
+
+<div class="card panel mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <select name="category" class="form-select">
+                    <option value="all">جميع الفئات</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="payment_method" class="form-select">
+                    <option value="">كل طرق الدفع</option>
+                    <option value="cash" {% if selected_payment == 'cash' %}selected{% endif %}>نقدي</option>
+                    <option value="bank" {% if selected_payment == 'bank' %}selected{% endif %}>تحويل بنكي</option>
+                    <option value="card" {% if selected_payment == 'card' %}selected{% endif %}>بطاقة</option>
+                </select>
+            </div>
+            <div class="col-md-2"><input type="date" name="date_from" class="form-control" value="{{ date_from }}"></div>
+            <div class="col-md-2"><input type="date" name="date_to" class="form-control" value="{{ date_to }}"></div>
+            <div class="col-md-2"><button class="btn btn-outline-primary w-100">فلترة</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card panel">
+    <div class="card-body">
+        <table class="table table-striped table-hover align-middle">
+            <thead><tr><th>التاريخ</th><th>الفئة</th><th>الوصف</th><th>المبلغ</th><th>الدفع</th><th>الإيصال</th><th>بواسطة</th><th>إجراءات</th></tr></thead>
+            <tbody>
+            {% for expense in expenses %}
+                <tr>
+                    <td>{{ expense.expense_date|date:'Y-m-d' }}</td>
+                    <td><span class="badge bg-{{ expense.category.color }}"><i class="{{ expense.category.icon }}"></i> {{ expense.category.name }}</span></td>
+                    <td>{{ expense.description|truncatechars:30 }}</td>
+                    <td class="fw-bold text-danger">{{ expense.amount }} ريال</td>
+                    <td>{{ expense.get_payment_method_display }}</td>
+                    <td>{{ expense.receipt_number|default:'-' }}</td>
+                    <td>{{ expense.created_by.username|default:'-' }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            {% if expense.receipt %}<a href="{{ expense.receipt.url }}" target="_blank" class="btn btn-info" title="عرض"><i class="fas fa-file"></i></a>{% endif %}
+                            <a href="{% url 'accounts:expense_edit' expense.id %}" class="btn btn-primary" title="تعديل"><i class="fas fa-edit"></i></a>
+                            <a href="{% url 'accounts:expense_delete' expense.id %}" class="btn btn-danger" title="حذف"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}<tr><td colspan="8" class="text-center">لا توجد مصروفات</td></tr>{% endfor %}
+            </tbody>
+        </table>
+
+        {% if expenses.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if expenses.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ expenses.previous_page_number }}&category={{ selected_category|default:'all' }}&payment_method={{ selected_payment|default:'' }}&date_from={{ date_from|default:'' }}&date_to={{ date_to|default:'' }}">السابق</a></li>
+                {% endif %}
+                {% for num in expenses.paginator.page_range %}
+                <li class="page-item {% if expenses.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}&category={{ selected_category|default:'all' }}&payment_method={{ selected_payment|default:'' }}&date_from={{ date_from|default:'' }}&date_to={{ date_to|default:'' }}">{{ num }}</a></li>
+                {% endfor %}
+                {% if expenses.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ expenses.next_page_number }}&category={{ selected_category|default:'all' }}&payment_method={{ selected_payment|default:'' }}&date_from={{ date_from|default:'' }}&date_to={{ date_to|default:'' }}">التالي</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

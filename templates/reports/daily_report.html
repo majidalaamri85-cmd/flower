@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}التقرير اليومي{% endblock %}
+{% block content %}
+<div class="card panel mb-3"><div class="card-body">
+    <form method="get" class="row g-2">
+        <div class="col-md-3"><input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}"></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">عرض</button></div>
+    </form>
+</div></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card panel"><div class="card-body">إجمالي المبيعات: <strong>{{ total_sales }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">عدد الفواتير: <strong>{{ sales_count }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">إجمالي المصروفات: <strong>{{ total_expenses }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">صافي الربح: <strong>{{ net_profit }}</strong></div></div></div>
+</div>
+
+<div class="card panel">
+    <div class="card-body">
+        <h5 class="mb-3">أفضل المنتجات</h5>
+        <table class="table table-striped">
+            <thead><tr><th>المنتج</th><th>النوع</th><th>الكمية</th><th>الإيراد</th></tr></thead>
+            <tbody>
+                {% for item in top_products %}
+                <tr><td>{{ item.product__name }}</td><td>{{ item.product__type }}</td><td>{{ item.total_quantity }}</td><td>{{ item.total_revenue }}</td></tr>
+                {% empty %}<tr><td colspan="4">لا توجد بيانات</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

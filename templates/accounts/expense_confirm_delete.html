@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}حذف مصروف{% endblock %}
+{% block content %}
+<div class="card panel">
+    <div class="card-body p-4">
+        <h4 class="mb-3 text-danger"><i class="fas fa-triangle-exclamation"></i> تأكيد حذف المصروف</h4>
+        <p>هل تريد حذف المصروف التالي؟</p>
+        <ul>
+            <li>الفئة: {{ expense.category.name }}</li>
+            <li>المبلغ: {{ expense.amount }} ريال</li>
+            <li>التاريخ: {{ expense.expense_date|date:'Y-m-d' }}</li>
+        </ul>
+        <form method="post" class="d-flex gap-2">
+            {% csrf_token %}
+            <a href="{% url 'accounts:expense_list' %}" class="btn btn-secondary">إلغاء</a>
+            <button type="submit" class="btn btn-danger">حذف نهائي</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

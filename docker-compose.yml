@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: flower_choco_shop
+      POSTGRES_USER: shop_user
+      POSTGRES_PASSWORD: secure_password_123
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py setup_permissions &&
+             python manage.py seed_expense_categories &&
+             python manage.py collectstatic --noinput &&
+             gunicorn shop_management.wsgi:application --bind 0.0.0.0:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DJANGO_SETTINGS_MODULE: shop_management.settings
+      DB_ENGINE: postgresql
+      DB_NAME: flower_choco_shop
+      DB_USER: shop_user
+      DB_PASSWORD: secure_password_123
+      DB_HOST: db
+      DB_PORT: 5432
+      DEBUG: True
+      SECRET_KEY: django-insecure-dev-key-only
+      ALLOWED_HOSTS: localhost,127.0.0.1
+
+  worker:
+    build: .
+    command: python manage.py process_tasks
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    environment:
+      DJANGO_SETTINGS_MODULE: shop_management.settings
+      DB_ENGINE: postgresql
+      DB_NAME: flower_choco_shop
+      DB_USER: shop_user
+      DB_PASSWORD: secure_password_123
+      DB_HOST: db
+      DB_PORT: 5432
+      DEBUG: True
+      SECRET_KEY: django-insecure-dev-key-only
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

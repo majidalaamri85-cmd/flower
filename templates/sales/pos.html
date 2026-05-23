@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}نقطة البيع{% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card panel">
+            <div class="card-body p-4">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6"><input id="searchInput" class="form-control" placeholder="بحث عن منتج..."></div>
+                    <div class="col-md-3">
+                        <select id="typeFilter" class="form-select">
+                            <option value="all">جميع المنتجات</option>
+                            <option value="flower">ورد</option>
+                            <option value="chocolate">شوكولاته</option>
+                            <option value="gift">هدايا</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3"><button class="btn btn-primary w-100" type="button" onclick="loadProducts()">تحديث</button></div>
+                </div>
+                <div id="productsContainer" class="row g-3"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card panel">
+            <div class="card-header bg-white"><strong>سلة المشتريات</strong></div>
+            <div class="card-body">
+                <div id="cartItems">{% include 'sales/partials/cart_items.html' %}</div>
+                <hr>
+                <div class="d-flex justify-content-between"><strong>الإجمالي</strong><strong id="cartTotal">{{ cart_total }} ريال</strong></div>
+                <button class="btn btn-success w-100 mt-3" data-bs-toggle="modal" data-bs-target="#checkoutModal">إنهاء الطلب</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="checkoutModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">إنهاء الطلب</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="post" action="{% url 'sales:checkout' %}">{% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">العميل</label>
+                            <select class="form-select" name="customer_id" id="customerSelect">
+                                <option value="">عميل نقدي</option>
+                                {% for customer in customers %}<option value="{{ customer.id }}">{{ customer.name }} - {{ customer.phone }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">طريقة الدفع</label>
+                            <select class="form-select" name="payment_method"><option value="cash">نقدي</option><option value="card">بطاقة</option><option value="mada">مدى</option><option value="bank_transfer">تحويل بنكي</option></select>
+                        </div>
+                        <div class="col-md-4"><label class="form-label">المبلغ المدفوع</label><input class="form-control" type="number" step="0.01" name="paid_amount" required></div>
+                        <div class="col-md-4"><label class="form-label">خصم</label><input class="form-control" type="number" step="0.01" name="discount" value="0"></div>
+                        <div class="col-md-4"><label class="form-label">ضريبة</label><input class="form-control" type="number" step="0.01" name="tax" value="0"></div>
+                        <div class="col-12"><label class="form-label">ملاحظات</label><textarea class="form-control" name="notes" rows="2"></textarea></div>
+                        <div class="col-12"><label class="form-check-label"><input class="form-check-input ms-2" type="checkbox" name="is_delivery" id="deliveryCheck">توصيل للمنزل</label></div>
+                        <div class="col-12" id="deliveryAddress" style="display:none;"><textarea class="form-control" name="delivery_address" rows="2" placeholder="عنوان التوصيل"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">تأكيد الدفع</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadProducts() {
+    const query = document.getElementById('searchInput').value;
+    const type = document.getElementById('typeFilter').value;
+    fetch(`/sales/search-product/?q=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`)
+        .then(response => response.text())
+        .then(html => { document.getElementById('productsContainer').innerHTML = html; });
+}
+function addToCart(productId) {
+    const quantity = prompt('أدخل الكمية:', '1');
+    if (!quantity || Number(quantity) <= 0) return;
+    fetch('/sales/add-to-cart/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify({product_id: productId, quantity: quantity})})
+        .then(r => r.json()).then(data => { if (data.success) location.reload(); else alert(data.error); });
+}
+function updateCart(productId, quantity) {
+    fetch('/sales/update-cart/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify({product_id: productId, quantity: quantity})})
+        .then(r => r.json()).then(data => { if (data.success) location.reload(); else alert(data.error); });
+}
+function removeFromCart(productId) {
+    fetch('/sales/remove-from-cart/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify({product_id: productId})})
+        .then(r => r.json()).then(data => { if (data.success) location.reload(); });
+}
+function getCookie(name) { let cookieValue = null; if (document.cookie && document.cookie !== '') { const cookies = document.cookie.split(';'); for (let i = 0; i < cookies.length; i++) { const cookie = cookies[i].trim(); if (cookie.substring(0, name.length + 1) === (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; } } } return cookieValue; }
+document.getElementById('deliveryCheck').addEventListener('change', function(){ document.getElementById('deliveryAddress').style.display = this.checked ? 'block' : 'none'; });
+loadProducts();
+</script>
+{% endblock %}
