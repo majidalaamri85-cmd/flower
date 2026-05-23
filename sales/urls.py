@@ -16,6 +16,7 @@ urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('invoices/', views.invoice_list, name='invoice_list'),
     path('invoice/<str:invoice_number>/', views.invoice_detail, name='invoice_detail'),
+    path('invoice/<str:invoice_number>/delete/', views.invoice_delete, name='invoice_delete'),
     path('invoice/<str:invoice_number>/pdf/', views.invoice_pdf, name='invoice_pdf'),
     path('customers/', views.customer_list, name='customer_list'),
     path('customers/add/', views.customer_create, name='customer_create'),

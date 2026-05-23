@@ -11,6 +11,10 @@
         <div class="d-flex flex-wrap gap-2">
             <a class="btn btn-outline-primary" href="{% url 'sales:invoice_pdf' sale.invoice_number %}">تحميل PDF</a>
             <a class="btn btn-light border" href="{% url 'sales:invoice_list' %}">العودة للفواتير</a>
+            <form method="post" action="{% url 'sales:invoice_delete' sale.invoice_number %}" onsubmit="return confirm('هل تريد حذف هذه الفاتورة واسترجاع الكميات للمخزون؟');">
+                {% csrf_token %}
+                <button class="btn btn-danger" type="submit">حذف الفاتورة</button>
+            </form>
         </div>
     </div>
 </div>

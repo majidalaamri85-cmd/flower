@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from inventory.models import Product
+from inventory.models import Product, StockMovement
 
 from .models import BundleOffer, Sale, SaleItem
 
@@ -134,3 +134,40 @@ class BarcodeSearchTests(TestCase):
 
 		self.assertEqual(response.status_code, 400)
 		self.assertFalse(response.json()['success'])
+
+
+class SaleDeleteTests(TestCase):
+	def setUp(self):
+		User = get_user_model()
+		self.user = User.objects.create_user(username='manager', password='pass12345')
+		self.client.force_login(self.user)
+
+	def test_delete_sale_restores_stock_and_removes_invoice(self):
+		product = Product.objects.create(
+			name='Refund Rose',
+			type='flower',
+			quantity=Decimal('3'),
+			purchase_price=Decimal('10.00'),
+			selling_price=Decimal('20.00'),
+		)
+		sale = Sale.objects.create(
+			invoice_number='',
+			subtotal=Decimal('40.00'),
+			total=Decimal('40.00'),
+			paid_amount=Decimal('40.00'),
+		)
+		SaleItem.objects.create(
+			sale=sale,
+			product=product,
+			quantity=Decimal('2'),
+			unit_price=Decimal('20.00'),
+			total=Decimal('40.00'),
+		)
+
+		response = self.client.post(reverse('sales:invoice_delete', args=[sale.invoice_number]))
+
+		self.assertRedirects(response, reverse('sales:invoice_list'))
+		self.assertFalse(Sale.objects.filter(pk=sale.pk).exists())
+		product.refresh_from_db()
+		self.assertEqual(product.quantity, Decimal('5'))
+		self.assertTrue(StockMovement.objects.filter(reference=f'DELETE-{sale.invoice_number}', movement_type='adjust').exists())

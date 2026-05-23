@@ -13,6 +13,7 @@ from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from reportlab.lib import colors
@@ -320,6 +321,33 @@ def invoice_list(request):
 def invoice_detail(request, invoice_number):
 	sale = get_object_or_404(Sale.objects.select_related('customer', 'employee').prefetch_related('items__product'), invoice_number=invoice_number)
 	return render(request, 'sales/invoice_detail.html', {'sale': sale})
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def invoice_delete(request, invoice_number):
+	sale = get_object_or_404(Sale.objects.prefetch_related('items__product'), invoice_number=invoice_number)
+	for item in sale.items.select_related('product'):
+		product = item.product
+		product.quantity += item.quantity
+		product.save(update_fields=['quantity', 'updated_at'])
+		StockMovement.objects.create(
+			product=product,
+			quantity=Decimal('0'),
+			movement_type='adjust',
+			reference=f'DELETE-{sale.invoice_number}',
+			notes=f'استرجاع {item.quantity} للمخزون بعد حذف الفاتورة {sale.invoice_number}',
+			created_by=request.user,
+		)
+
+	if sale.customer:
+		sale.customer.total_purchases = max(sale.customer.total_purchases - sale.total, Decimal('0'))
+		sale.customer.save(update_fields=['total_purchases'])
+
+	sale.delete()
+	messages.success(request, f'تم حذف الفاتورة {invoice_number} واسترجاع الكميات للمخزون')
+	return redirect('sales:invoice_list')
 
 
 @login_required
