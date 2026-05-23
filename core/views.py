@@ -33,7 +33,7 @@ def dashboard(request):
 		'month_total': month_sales.aggregate(total=Sum('total'))['total'] or 0,
 		'low_stock_count': products.filter(quantity__lte=F('min_stock')).count(),
 		'expiring_flowers_count': products.filter(type='flower', harvest_date__isnull=False).count(),
-		'today_expenses': Expense.objects.filter(created_at__gte=start_of_today).aggregate(total=Sum('amount'))['total'] or 0,
+		'today_expenses': Expense.objects.filter(expense_date=today).aggregate(total=Sum('amount'))['total'] or 0,
 		'recent_sales': Sale.objects.select_related('customer').order_by('-created_at')[:10],
 		'low_stock_list': products.filter(quantity__lte=F('min_stock'))[:10],
 	}

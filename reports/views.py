@@ -27,7 +27,7 @@ def daily_report(request):
 	avg_sale = total_sales / sales_count if sales_count else 0
 
 	payment_methods = sales.values('payment_method').annotate(total=Sum('total'), count=Count('id')).order_by('-total')
-	expenses = Expense.objects.filter(created_at__range=[start_of_day, end_of_day])
+	expenses = Expense.objects.filter(expense_date=selected_date)
 	total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
 	net_profit = total_sales - total_expenses
 
@@ -88,7 +88,7 @@ def monthly_report(request):
 		daily_sales.append({'day': day.day, 'total': float(day_total)})
 		day += timedelta(days=1)
 
-	expenses = Expense.objects.filter(created_at__range=[start_date_aware, end_date_aware])
+	expenses = Expense.objects.filter(expense_date__range=[start_date.date(), end_date.date()])
 	total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
 	expenses_by_category = expenses.values('category__name').annotate(total=Sum('amount')).order_by('-total')
 
@@ -177,7 +177,7 @@ def profit_loss(request):
 
 	gross_profit = revenue - cogs
 	gross_margin = (gross_profit / revenue * 100) if revenue else 0
-	operating_expenses = Expense.objects.filter(created_at__gte=start_of_month).aggregate(total=Sum('amount'))['total'] or 0
+	operating_expenses = Expense.objects.filter(expense_date__gte=start_of_month.date()).aggregate(total=Sum('amount'))['total'] or 0
 	net_profit = gross_profit - operating_expenses
 
 	return render(
