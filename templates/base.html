@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -19,6 +20,7 @@
         .btn-primary { background: #1d4ed8; border-color: #1d4ed8; }
         .table thead th { background: #e2e8f0; }
     </style>
+    <link href="{% static 'css/theme.css' %}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
