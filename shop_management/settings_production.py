@@ -7,7 +7,13 @@ from .settings import *
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 SECRET_KEY = config('SECRET_KEY')
-ALLOWED_HOSTS = [host.strip() for host in config('ALLOWED_HOSTS', default='').split(',') if host.strip()]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver,.onrender.com').split(',')
+    if host.strip()
+]
+if 'testserver' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('testserver')
 
 DATABASES = {
     'default': dj_database_url.config(
@@ -28,6 +34,7 @@ STORAGES = {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
+WHITENOISE_MANIFEST_STRICT = False
 
 if 'corsheaders' not in INSTALLED_APPS:
     INSTALLED_APPS.append('corsheaders')
