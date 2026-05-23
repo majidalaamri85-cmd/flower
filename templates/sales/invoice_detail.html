@@ -1,31 +1,50 @@
 {% extends 'base.html' %}
 {% block title %}فاتورة {{ sale.invoice_number }}{% endblock %}
 {% block content %}
+<div class="page-hero panel p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div>
+            <span class="page-kicker text-primary">تفاصيل الفاتورة</span>
+            <h3 class="mb-1">فاتورة {{ sale.invoice_number }}</h3>
+            <div class="text-muted">{{ sale.created_at }}</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary" href="{% url 'sales:invoice_pdf' sale.invoice_number %}">تحميل PDF</a>
+            <a class="btn btn-light border" href="{% url 'sales:invoice_list' %}">العودة للفواتير</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4"><div class="card panel stat-tile stat-tile-sales"><div class="card-body"><small class="text-muted d-block mb-2">العميل</small><strong class="invoice-meta-value">{{ sale.customer.name|default:'نقدي' }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel stat-tile stat-tile-stock"><div class="card-body"><small class="text-muted d-block mb-2">الإجمالي</small><strong class="invoice-meta-value">{{ sale.total }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel stat-tile stat-tile-profit"><div class="card-body"><small class="text-muted d-block mb-2">المدفوع</small><strong class="invoice-meta-value">{{ sale.paid_amount }}</strong></div></div></div>
+</div>
+
+<div class="card panel table-surface mb-3">
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+                <tbody>
+                {% for item in sale.items.all %}
+                    <tr><td>{{ item.product.name }}</td><td>{{ item.quantity }}</td><td>{{ item.unit_price }}</td><td>{{ item.total }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="card panel">
     <div class="card-body p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h3 class="mb-1">فاتورة {{ sale.invoice_number }}</h3>
-                <div class="text-muted">{{ sale.created_at }}</div>
-            </div>
-            <a class="btn btn-outline-primary" href="{% url 'sales:invoice_pdf' sale.invoice_number %}">تحميل PDF</a>
-        </div>
-        <p><strong>العميل:</strong> {{ sale.customer.name|default:'نقدي' }}</p>
-        <table class="table">
-            <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
-            <tbody>
-            {% for item in sale.items.all %}
-                <tr><td>{{ item.product.name }}</td><td>{{ item.quantity }}</td><td>{{ item.unit_price }}</td><td>{{ item.total }}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        <div class="text-end">
-            <div>المجموع الفرعي: {{ sale.subtotal }}</div>
-            <div>الخصم: {{ sale.discount }}</div>
-            <div>الضريبة: {{ sale.tax }}</div>
-            <div><strong>الإجمالي: {{ sale.total }}</strong></div>
-            <div>المدفوع: {{ sale.paid_amount }}</div>
-            <div>الباقي: {{ sale.change_amount }}</div>
+        <div class="invoice-summary-grid text-end">
+            <div class="invoice-summary-row"><span>المجموع الفرعي</span><strong>{{ sale.subtotal }}</strong></div>
+            <div class="invoice-summary-row"><span>الخصم</span><strong>{{ sale.discount }}</strong></div>
+            <div class="invoice-summary-row"><span>الضريبة</span><strong>{{ sale.tax }}</strong></div>
+            <div class="invoice-summary-row invoice-summary-row-total"><span>الإجمالي</span><strong>{{ sale.total }}</strong></div>
+            <div class="invoice-summary-row"><span>المدفوع</span><strong>{{ sale.paid_amount }}</strong></div>
+            <div class="invoice-summary-row"><span>الباقي</span><strong>{{ sale.change_amount }}</strong></div>
         </div>
     </div>
 </div>

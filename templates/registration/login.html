@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
 {% block title %}تسجيل الدخول{% endblock %}
 {% block login_content %}
-<div class="container py-5" style="max-width: 520px;">
-    <div class="card panel">
-        <div class="card-body p-4">
-            <h3 class="mb-3 text-center">تسجيل الدخول</h3>
+<div class="login-shell">
+    <div class="login-card card panel">
+        <div class="card-body p-4 p-lg-5">
+            <div class="login-brand text-center mb-4">
+                <span class="login-brand-mark"><i class="fa-solid fa-store"></i></span>
+                <h3 class="mb-2">تسجيل الدخول</h3>
+                <p class="text-muted mb-0">واجهة موحدة لإدارة الورود والشوكولاتة والمبيعات اليومية.</p>
+            </div>
             {% if form.errors %}<div class="alert alert-danger">اسم المستخدم أو كلمة المرور غير صحيحة</div>{% endif %}
             <form method="post">
                 {% csrf_token %}
@@ -16,7 +20,7 @@
                     <label class="form-label">كلمة المرور</label>
                     <input type="password" name="password" class="form-control" required>
                 </div>
-                <button class="btn btn-primary w-100" type="submit">دخول</button>
+                <button class="btn btn-primary w-100 py-3" type="submit">دخول</button>
             </form>
         </div>
     </div>

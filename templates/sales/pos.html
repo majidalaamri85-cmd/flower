@@ -1,10 +1,27 @@
 {% extends 'base.html' %}
 {% block title %}نقطة البيع{% endblock %}
 {% block content %}
+<div class="hero-card page-hero p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <span class="page-kicker">المبيعات المباشرة</span>
+            <h2 class="mb-1">نقطة البيع</h2>
+            <p class="mb-0">بحث أسرع، بطاقات أوضح للمنتجات، وسلة شراء أكثر وضوحًا أثناء الإنهاء.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="summary-chip">المنتجات حسب البحث المباشر</span>
+            <a class="btn btn-light" href="{% url 'sales:pos_offline' %}">وضع Offline</a>
+        </div>
+    </div>
+</div>
 <div class="row g-3">
     <div class="col-lg-8">
-        <div class="card panel">
+        <div class="card panel pos-shell">
             <div class="card-body p-4">
+                <div class="section-heading mb-3">
+                    <h5 class="mb-1">اختيار المنتجات</h5>
+                    <p class="text-muted mb-0">استخدم البحث أو الفلترة للوصول السريع للصنف المناسب.</p>
+                </div>
                 <div class="row g-2 mb-3">
                     <div class="col-md-6"><input id="searchInput" class="form-control" placeholder="بحث عن منتج..."></div>
                     <div class="col-md-3">
@@ -22,15 +39,26 @@
         </div>
     </div>
     <div class="col-lg-4">
-        <div class="card panel">
-            <div class="card-header bg-white"><strong>سلة المشتريات</strong></div>
+        <div class="card panel pos-cart-card" id="cartPanel">
+            <div class="card-header bg-white"><strong>سلة المشتريات</strong><div class="small text-muted mt-1">راجع الكميات قبل الدفع.</div></div>
             <div class="card-body">
                 <div id="cartItems">{% include 'sales/partials/cart_items.html' %}</div>
                 <hr>
-                <div class="d-flex justify-content-between"><strong>الإجمالي</strong><strong id="cartTotal">{{ cart_total }} ريال</strong></div>
+                <div class="d-flex justify-content-between cart-total-line"><strong>الإجمالي</strong><strong id="cartTotal">{{ cart_total }} ريال</strong></div>
                 <button class="btn btn-success w-100 mt-3" data-bs-toggle="modal" data-bs-target="#checkoutModal">إنهاء الطلب</button>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="pos-mobile-bar d-lg-none">
+    <div class="pos-mobile-bar__summary">
+        <small>الإجمالي الحالي</small>
+        <strong id="mobileCartTotal">{{ cart_total }} ريال</strong>
+    </div>
+    <div class="pos-mobile-bar__actions">
+        <button class="btn btn-light" type="button" onclick="scrollToCartPanel()">عرض السلة</button>
+        <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#checkoutModal">إنهاء الطلب</button>
     </div>
 </div>
 
@@ -57,7 +85,7 @@
                         <div class="col-md-4"><label class="form-label">ضريبة</label><input class="form-control" type="number" step="0.01" name="tax" value="0"></div>
                         <div class="col-12"><label class="form-label">ملاحظات</label><textarea class="form-control" name="notes" rows="2"></textarea></div>
                         <div class="col-12"><label class="form-check-label"><input class="form-check-input ms-2" type="checkbox" name="is_delivery" id="deliveryCheck">توصيل للمنزل</label></div>
-                        <div class="col-12" id="deliveryAddress" style="display:none;"><textarea class="form-control" name="delivery_address" rows="2" placeholder="عنوان التوصيل"></textarea></div>
+                        <div class="col-12 d-none" id="deliveryAddress"><textarea class="form-control" name="delivery_address" rows="2" placeholder="عنوان التوصيل"></textarea></div>
                     </div>
                 </div>
                 <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">تأكيد الدفع</button></div>
@@ -88,8 +116,11 @@ function removeFromCart(productId) {
     fetch('/sales/remove-from-cart/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify({product_id: productId})})
         .then(r => r.json()).then(data => { if (data.success) location.reload(); });
 }
+function scrollToCartPanel() {
+    document.getElementById('cartPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 function getCookie(name) { let cookieValue = null; if (document.cookie && document.cookie !== '') { const cookies = document.cookie.split(';'); for (let i = 0; i < cookies.length; i++) { const cookie = cookies[i].trim(); if (cookie.substring(0, name.length + 1) === (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; } } } return cookieValue; }
-document.getElementById('deliveryCheck').addEventListener('change', function(){ document.getElementById('deliveryAddress').style.display = this.checked ? 'block' : 'none'; });
+document.getElementById('deliveryCheck').addEventListener('change', function(){ document.getElementById('deliveryAddress').classList.toggle('d-none', !this.checked); });
 loadProducts();
 </script>
 {% endblock %}

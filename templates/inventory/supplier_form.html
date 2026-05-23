@@ -1,13 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}{{ title|default:'إضافة مورد' }}{% endblock %}
 {% block content %}
-<div class="card panel">
+<div class="page-hero panel p-4 mb-4">
+    <span class="page-kicker text-primary">الموردون</span>
+    <h3 class="mb-1">{{ title|default:'إضافة مورد' }}</h3>
+    <p class="mb-0 text-muted">نموذج مورد مبسط وسهل الإدخال على جميع المقاسات.</p>
+</div>
+
+<div class="card panel form-card">
 	<div class="card-body p-4">
-		<h3 class="mb-4">{{ title|default:'إضافة مورد' }}</h3>
-		<form method="post">
+		<form method="post" class="stacked-form">
 			{% csrf_token %}
 			{{ form.as_p }}
-			<button class="btn btn-primary">حفظ</button>
+			<div class="form-actions d-flex flex-wrap gap-2">
+				<button class="btn btn-primary" type="submit">حفظ</button>
+			</div>
 		</form>
 	</div>
 </div>

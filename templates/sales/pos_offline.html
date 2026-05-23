@@ -3,37 +3,6 @@
 
 {% block title %}نقطة البيع - Offline{% endblock %}
 
-{% block extra_css %}
-<style>
-    .offline-badge {
-        position: fixed;
-        top: 14px;
-        right: 14px;
-        z-index: 1200;
-        padding: 8px 16px;
-        border-radius: 999px;
-        color: #fff;
-        font-size: 13px;
-        font-weight: 600;
-    }
-    .offline-badge.online { background: #16a34a; }
-    .offline-badge.offline { background: #dc2626; }
-    .sync-progress {
-        position: fixed;
-        bottom: 14px;
-        right: 14px;
-        background: #fff;
-        border-radius: 10px;
-        padding: 10px 14px;
-        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
-        z-index: 1200;
-        display: none;
-    }
-    .pos-product-card { cursor: pointer; }
-    .pos-product-card:hover { transform: translateY(-2px); transition: transform 0.15s ease; }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="offline-badge" id="connectionStatus"><i class="fa-solid fa-wifi"></i> <span id="statusText">متصل</span></div>
 <div class="sync-progress" id="syncProgress">
@@ -43,10 +12,28 @@
     </div>
 </div>
 
+<div class="hero-card page-hero p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <span class="page-kicker">المبيعات دون اتصال</span>
+            <h2 class="mb-1">نقطة البيع Offline</h2>
+            <p class="mb-0">تجربة موحدة تحفظ العمليات محليًا وتُبقي التركيز على سرعة التنفيذ.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="summary-chip">يحفظ المبيعات محليًا عند انقطاع الشبكة</span>
+            <a class="btn btn-light" href="{% url 'sales:pos' %}">العودة للوضع المباشر</a>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <div class="col-lg-8">
-        <div class="card panel">
+        <div class="card panel pos-shell">
             <div class="card-body p-4">
+                <div class="section-heading mb-3">
+                    <h5 class="mb-1">اختيار المنتجات</h5>
+                    <p class="text-muted mb-0">التصفية والبحث يعملان محليًا على قاعدة البيانات المخزنة.</p>
+                </div>
                 <div class="row g-2 mb-3">
                     <div class="col-md-6"><input type="text" id="searchInput" class="form-control" placeholder="بحث عن منتج..."></div>
                     <div class="col-md-3">
@@ -65,17 +52,28 @@
     </div>
 
     <div class="col-lg-4">
-        <div class="card panel">
-            <div class="card-header"><strong>سلة المشتريات</strong></div>
-            <div class="card-body" style="max-height: 520px; overflow-y: auto;"><div id="cartItems"></div></div>
+        <div class="card panel pos-cart-card" id="cartPanel">
+            <div class="card-header"><strong>سلة المشتريات</strong><div class="small text-muted mt-1">جاهزة للحفظ المحلي والمزامنة لاحقًا.</div></div>
+            <div class="card-body cart-scroll"><div id="cartItems"></div></div>
             <div class="card-footer bg-white">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between cart-total-line">
                     <span>الإجمالي</span>
                     <strong id="cartTotal">0 ريال</strong>
                 </div>
                 <button class="btn btn-success w-100 mt-3" type="button" onclick="processCheckout()">إنهاء الطلب</button>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="pos-mobile-bar d-lg-none">
+    <div class="pos-mobile-bar__summary">
+        <small>الإجمالي الحالي</small>
+        <strong id="mobileCartTotal">0 ريال</strong>
+    </div>
+    <div class="pos-mobile-bar__actions">
+        <button class="btn btn-light" type="button" onclick="scrollToCartPanel()">عرض السلة</button>
+        <button class="btn btn-success" type="button" onclick="processCheckout()">إنهاء الطلب</button>
     </div>
 </div>
 {% endblock %}
@@ -106,10 +104,15 @@ function displayProducts(products) {
         node.className = 'col-md-4';
         node.innerHTML = `
             <div class="card panel pos-product-card h-100" onclick="addToCart(${product.id}, '${String(product.name).replace(/'/g, "\\'")}', ${product.selling_price})">
-                <div class="card-body text-center">
-                    <h6 class="mb-2">${product.name}</h6>
-                    <div class="text-primary mb-1">${product.selling_price} ريال</div>
-                    <small class="text-muted">المتوفر: ${product.quantity}</small>
+                <div class="card-body text-center d-flex flex-column justify-content-between gap-2">
+                    <div>
+                        <span class="product-type-chip mb-2 d-inline-flex">${product.type === 'flower' ? 'ورد' : product.type === 'chocolate' ? 'شوكولاته' : 'هدية'}</span>
+                        <h6 class="mb-2">${product.name}</h6>
+                    </div>
+                    <div>
+                        <div class="text-primary fw-semibold mb-1">${product.selling_price} ريال</div>
+                        <small class="text-muted">المتوفر: ${product.quantity}</small>
+                    </div>
                 </div>
             </div>
         `;
@@ -148,16 +151,21 @@ function removeFromCart(index) {
     updateCartDisplay();
 }
 
+function scrollToCartPanel() {
+    document.getElementById('cartPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function updateCartDisplay() {
     const cartItems = document.getElementById('cartItems');
     const cartTotal = document.getElementById('cartTotal');
+    const mobileCartTotal = document.getElementById('mobileCartTotal');
     cartItems.innerHTML = '';
 
     let total = 0;
     cart.forEach((item, idx) => {
         total += item.price * item.quantity;
         cartItems.innerHTML += `
-            <div class="border rounded p-2 mb-2">
+            <div class="cart-item mb-2">
                 <div class="d-flex justify-content-between align-items-center gap-2">
                     <div>
                         <div class="fw-semibold">${item.name}</div>
@@ -170,6 +178,7 @@ function updateCartDisplay() {
     });
 
     cartTotal.textContent = `${total.toFixed(2)} ريال`;
+    mobileCartTotal.textContent = `${total.toFixed(2)} ريال`;
 }
 
 async function processCheckout() {

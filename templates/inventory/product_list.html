@@ -1,16 +1,27 @@
 {% extends 'base.html' %}
 {% block title %}المنتجات - إدارة المخزون{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">إدارة المنتجات</h2>
-    <div class="d-flex gap-2">
-        <a class="btn btn-warning" href="{% url 'inventory:low_stock' %}">منخفضة المخزون ({{ low_stock_count }})</a>
-        <a class="btn btn-danger" href="{% url 'inventory:expiring_flowers' %}">ينتهي قريبًا ({{ expiring_count }})</a>
-        <a class="btn btn-primary" href="{% url 'inventory:product_create' %}">منتج جديد</a>
+<div class="page-hero panel p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+        <div>
+            <span class="page-kicker text-primary">المخزون</span>
+            <h2 class="mb-1">إدارة المنتجات</h2>
+            <p class="mb-0 text-muted">متابعة الأصناف، مراقبة الكميات، والوصول السريع للحالات الحرجة.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-warning" href="{% url 'inventory:low_stock' %}">منخفضة المخزون ({{ low_stock_count }})</a>
+            <a class="btn btn-danger" href="{% url 'inventory:expiring_flowers' %}">ينتهي قريبًا ({{ expiring_count }})</a>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="summary-chip">إجمالي النتائج: {{ products.paginator.count }}</span>
+        <span class="summary-chip summary-chip-soft">حرج: {{ low_stock_count }}</span>
+        <span class="summary-chip summary-chip-warm">قريب انتهاء: {{ expiring_count }}</span>
+        <a class="btn btn-primary ms-auto" href="{% url 'inventory:product_create' %}">منتج جديد</a>
     </div>
 </div>
 
-<div class="card panel mb-3">
+<div class="card panel filter-panel mb-3">
     <div class="card-body">
         <form method="get" class="row g-2">
             <div class="col-md-5"><input class="form-control" name="search" value="{{ search|default:'' }}" placeholder="بحث بالاسم أو SKU أو باركود"></div>
@@ -46,7 +57,7 @@
                 </thead>
                 <tbody>
                     {% for product in products %}
-                    <tr class="{% if product.quantity <= product.min_stock %}table-warning{% endif %}">
+                    <tr class="{% if product.quantity <= product.min_stock %}inventory-row-warning{% endif %}">
                         <td>
                             <div class="fw-semibold">{{ product.name }}</div>
                             <small class="text-muted">SKU: {{ product.sku }}</small>
@@ -59,8 +70,9 @@
                         <td>
                             {% if product.is_expiring_soon %}<span class="badge bg-danger">ينتهي قريبًا</span>{% endif %}
                             {% if product.quantity <= product.min_stock %}<span class="badge bg-warning text-dark">منخفض</span>{% endif %}
+                            {% if not product.is_expiring_soon and product.quantity > product.min_stock %}<span class="status-pill status-pill-success">مستقر</span>{% endif %}
                         </td>
-                        <td class="d-flex gap-1">
+                        <td class="table-actions d-flex flex-wrap gap-1">
                             <a class="btn btn-sm btn-outline-primary" href="{% url 'inventory:product_edit' product.id %}">تعديل</a>
                             <a class="btn btn-sm btn-outline-info" href="{% url 'inventory:stock_adjust' product.id %}">مخزون</a>
                             <a class="btn btn-sm btn-outline-danger" href="{% url 'inventory:product_delete' product.id %}">حذف</a>

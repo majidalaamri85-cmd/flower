@@ -1,10 +1,15 @@
 {% extends 'base.html' %}
 {% block title %}إضافة مستخدم{% endblock %}
 {% block content %}
-<div class="card panel">
+<div class="page-hero panel p-4 mb-4">
+    <span class="page-kicker text-primary">المستخدمون</span>
+    <h3 class="mb-1">إضافة مستخدم جديد</h3>
+    <p class="mb-0 text-muted">إعداد حساب جديد مع تنسيق واضح وملائم للشاشات الصغيرة.</p>
+</div>
+
+<div class="card panel form-card">
     <div class="card-body p-4">
-        <h3 class="mb-4">إضافة مستخدم جديد</h3>
-        <form method="post">
+        <form method="post" class="stacked-form">
             {% csrf_token %}
             {{ form.as_p }}
             <div class="mb-3">
@@ -14,7 +19,9 @@
                     {% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}
                 </select>
             </div>
-            <button class="btn btn-primary">حفظ</button>
+            <div class="form-actions d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" type="submit">حفظ</button>
+            </div>
         </form>
     </div>
 </div>
