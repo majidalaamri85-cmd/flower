@@ -274,6 +274,18 @@ small {
   padding: .5rem 1rem;
 }
 
+.logout-form {
+  margin: 0;
+}
+
+.logout-link {
+  width: 100%;
+  border: 0;
+  text-align: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
 .card-body {
   padding: 1rem;
 }
