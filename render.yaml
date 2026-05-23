@@ -11,6 +11,7 @@ services:
       python manage.py migrate
       python manage.py setup_permissions
       python manage.py seed_expense_categories
+      python manage.py seed_data
     startCommand: gunicorn shop_management.wsgi:application
     envVars:
       - key: DJANGO_SETTINGS_MODULE
