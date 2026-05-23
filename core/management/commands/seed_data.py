@@ -221,10 +221,12 @@ class Command(BaseCommand):
             category = Category.objects.filter(name=row.pop('category_name')).first()
             if not category:
                 continue
+            sku = row.pop('sku')
             product, created = Product.objects.get_or_create(
-                name=row['name'],
+                sku=sku,
                 defaults={
                     **row,
+                    'sku': sku,
                     'category': category,
                     'is_active': True,
                 },
