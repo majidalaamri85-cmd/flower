@@ -15,7 +15,7 @@
         </div>
         <div class="table-responsive">
             <table class="table align-middle">
-                <thead><tr><th>الرقم</th><th>العميل</th><th>الإجمالي</th><th>التاريخ</th></tr></thead>
+                <thead><tr><th>الرقم</th><th>العميل</th><th>الإجمالي</th><th>التاريخ</th><th>إجراءات</th></tr></thead>
                 <tbody>
                 {% for sale in invoices %}
                     <tr>
@@ -23,8 +23,15 @@
                         <td>{{ sale.customer.name|default:'نقدي' }}</td>
                         <td>{{ sale.total }} {{ settings.currency_symbol }}</td>
                         <td>{{ sale.created_at }}</td>
+                        <td class="table-actions d-flex flex-wrap gap-1">
+                            <a class="btn btn-sm btn-outline-primary" href="{% url 'sales:invoice_detail' sale.invoice_number %}">عرض</a>
+                            <form method="post" action="{% url 'sales:invoice_delete' sale.invoice_number %}" onsubmit="return confirm('هل تريد حذف هذه الفاتورة واسترجاع الكميات للمخزون؟');">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-danger" type="submit">حذف</button>
+                            </form>
+                        </td>
                     </tr>
-                {% empty %}<tr><td colspan="4" class="text-center">لا توجد فواتير</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="5" class="text-center">لا توجد فواتير</td></tr>{% endfor %}
                 </tbody>
             </table>
         </div>
