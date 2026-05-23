@@ -1,10 +1,12 @@
-const CACHE_NAME = 'shop-management-v1';
+const CACHE_NAME = 'shop-management-v2';
 const OFFLINE_CACHE = 'offline-data-v1';
 
 const urlsToCache = [
   '/',
   '/sales/pos-offline/',
   '/static/manifest.json',
+  '/static/css/theme.css',
+  '/static/images/floral-watermark.svg',
   '/static/js/indexeddb.js',
   '/static/js/offline-manager.js'
 ];
