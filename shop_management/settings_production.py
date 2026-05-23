@@ -5,7 +5,7 @@ from decouple import config
 
 from .settings import *
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = _boolean_config('DEBUG', default=False)
 SECRET_KEY = config('SECRET_KEY')
 ALLOWED_HOSTS = [
     host.strip()

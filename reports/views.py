@@ -32,7 +32,10 @@ def _trend_label(change):
 def daily_report(request):
 	today = timezone.localdate()
 	selected_date = request.GET.get('date', today.isoformat())
-	selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+	try:
+		selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+	except ValueError:
+		selected_date = today
 
 	start_of_day = timezone.make_aware(datetime.combine(selected_date, datetime.min.time()))
 	end_of_day = timezone.make_aware(datetime.combine(selected_date, datetime.max.time()))
@@ -80,8 +83,14 @@ def daily_report(request):
 @login_required
 def monthly_report(request):
 	now = timezone.now()
-	current_month = int(request.GET.get('month', now.month))
-	current_year = int(request.GET.get('year', now.year))
+	try:
+		current_month = int(request.GET.get('month', now.month))
+		current_year = int(request.GET.get('year', now.year))
+	except (TypeError, ValueError):
+		current_month = now.month
+		current_year = now.year
+	if current_month < 1 or current_month > 12:
+		current_month = now.month
 
 	start_date = datetime(current_year, current_month, 1)
 	if current_month == 12:

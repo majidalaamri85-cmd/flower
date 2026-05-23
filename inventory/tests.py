@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from .models import Product, StockMovement, Supplier
@@ -65,3 +66,18 @@ class StockMovementModelTests(TestCase):
 		StockMovement.objects.create(product=product, quantity=Decimal('4'), movement_type='out')
 		product.refresh_from_db()
 		self.assertEqual(product.quantity, Decimal('6'))
+
+	def test_stock_movement_rejects_negative_stock(self):
+		product = Product.objects.create(
+			name='Limited Box',
+			type='chocolate',
+			quantity=Decimal('1'),
+			purchase_price=Decimal('4.00'),
+			selling_price=Decimal('8.00'),
+		)
+
+		with self.assertRaises(ValidationError):
+			StockMovement.objects.create(product=product, quantity=Decimal('2'), movement_type='out')
+
+		product.refresh_from_db()
+		self.assertEqual(product.quantity, Decimal('1'))

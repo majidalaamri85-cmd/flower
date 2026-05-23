@@ -26,10 +26,16 @@
                     <label class="form-label" for="barcodeInput">قارئ الباركود</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-barcode"></i></span>
-                        <input id="barcodeInput" class="form-control" inputmode="numeric" autocomplete="off" placeholder="امسح الباركود أو أدخل SKU ثم اضغط Enter">
+                        <input id="barcodeInput" class="form-control" inputmode="numeric" autocomplete="off" autofocus placeholder="امسح الباركود أو أدخل SKU ثم اضغط Enter">
                         <button class="btn btn-primary" type="button" onclick="scanBarcode()">إضافة</button>
+                        <button class="btn btn-outline-primary" type="button" id="cameraScanButton" onclick="toggleCameraScanner()"><i class="fa-solid fa-camera"></i></button>
                     </div>
                     <div id="barcodeStatus" class="small text-muted mt-2">جاهز للمسح من قارئ USB.</div>
+                    <div id="cameraScanner" class="camera-scanner mt-3 d-none">
+                        <video id="barcodeVideo" playsinline muted></video>
+                        <div class="camera-scanner__line"></div>
+                        <button class="btn btn-sm btn-light camera-scanner__close" type="button" onclick="stopCameraScanner()">إيقاف</button>
+                    </div>
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-md-6"><input id="searchInput" class="form-control" placeholder="بحث عن منتج..."></div>
@@ -118,7 +124,15 @@ function addToCart(productId) {
 }
 function addProductToCart(productId, quantity) {
     fetch('/sales/add-to-cart/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify({product_id: productId, quantity: quantity})})
-        .then(r => r.json()).then(data => { if (data.success) location.reload(); else alert(data.error); });
+        .then(r => r.json()).then(data => {
+            if (data.success) {
+                sessionStorage.setItem('focusBarcodeAfterReload', '1');
+                location.reload();
+            } else {
+                alert(data.error);
+                focusBarcodeInput(true);
+            }
+        });
 }
 function setBarcodeStatus(message, type) {
     const status = document.getElementById('barcodeStatus');
@@ -143,11 +157,103 @@ function scanBarcode() {
                 return;
             }
             setBarcodeStatus(`تم العثور على ${data.product.name}، جاري الإضافة للسلة...`, 'success');
+            input.value = '';
             addProductToCart(data.product.id, '1');
         })
         .catch(() => {
             setBarcodeStatus('تعذر البحث عن الباركود حالياً.', 'error');
         });
+}
+let barcodeDetector = null;
+let cameraStream = null;
+let cameraScanTimer = null;
+let isCameraScanning = false;
+
+async function toggleCameraScanner() {
+    if (isCameraScanning) {
+        stopCameraScanner();
+        return;
+    }
+    await startCameraScanner();
+}
+
+async function startCameraScanner() {
+    if (!('BarcodeDetector' in window)) {
+        setBarcodeStatus('متصفح الهاتف لا يدعم المسح بالكاميرا. استخدم قارئ USB أو أدخل الباركود يدوياً.', 'error');
+        return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setBarcodeStatus('الكاميرا غير متاحة من هذا المتصفح.', 'error');
+        return;
+    }
+
+    try {
+        barcodeDetector = barcodeDetector || new BarcodeDetector({
+            formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code']
+        });
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+            audio: false
+        });
+
+        const scanner = document.getElementById('cameraScanner');
+        const video = document.getElementById('barcodeVideo');
+        video.srcObject = cameraStream;
+        scanner.classList.remove('d-none');
+        await video.play();
+        isCameraScanning = true;
+        document.getElementById('cameraScanButton').classList.add('active');
+        setBarcodeStatus('وجّه كاميرا الهاتف نحو الباركود.', 'muted');
+        cameraScanTimer = window.setInterval(detectBarcodeFromCamera, 350);
+    } catch (error) {
+        stopCameraScanner();
+        setBarcodeStatus('تعذر تشغيل الكاميرا. تأكد من السماح للمتصفح باستخدام الكاميرا وأن الصفحة تعمل عبر HTTPS.', 'error');
+    }
+}
+
+async function detectBarcodeFromCamera() {
+    const video = document.getElementById('barcodeVideo');
+    if (!barcodeDetector || !video || video.readyState < 2) return;
+
+    try {
+        const barcodes = await barcodeDetector.detect(video);
+        if (!barcodes.length) return;
+
+        const code = String(barcodes[0].rawValue || '').trim();
+        if (!code) return;
+
+        stopCameraScanner();
+        const input = document.getElementById('barcodeInput');
+        input.value = code;
+        setBarcodeStatus(`تمت قراءة الباركود: ${code}`, 'success');
+        scanBarcode();
+    } catch (error) {
+        setBarcodeStatus('تعذرت قراءة الباركود من الكاميرا حالياً.', 'error');
+    }
+}
+
+function stopCameraScanner() {
+    if (cameraScanTimer) {
+        window.clearInterval(cameraScanTimer);
+        cameraScanTimer = null;
+    }
+    if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+    }
+    const video = document.getElementById('barcodeVideo');
+    if (video) video.srcObject = null;
+    const scanner = document.getElementById('cameraScanner');
+    if (scanner) scanner.classList.add('d-none');
+    const button = document.getElementById('cameraScanButton');
+    if (button) button.classList.remove('active');
+    isCameraScanning = false;
+}
+function focusBarcodeInput(selectText = false) {
+    const input = document.getElementById('barcodeInput');
+    if (!input) return;
+    input.focus();
+    if (selectText) input.select();
 }
 function updateCart(productId, quantity) {
     fetch('/sales/update-cart/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify({product_id: productId, quantity: quantity})})
@@ -168,6 +274,17 @@ document.getElementById('barcodeInput').addEventListener('keydown', function(eve
         scanBarcode();
     }
 });
+document.addEventListener('DOMContentLoaded', function() {
+    if (!('BarcodeDetector' in window)) {
+        document.getElementById('cameraScanButton').disabled = true;
+    }
+    if (sessionStorage.getItem('focusBarcodeAfterReload')) {
+        sessionStorage.removeItem('focusBarcodeAfterReload');
+        setBarcodeStatus('تمت الإضافة للسلة. جاهز لمسح المنتج التالي.', 'success');
+    }
+    focusBarcodeInput();
+});
+window.addEventListener('beforeunload', stopCameraScanner);
 loadProducts();
 </script>
 {% endblock %}

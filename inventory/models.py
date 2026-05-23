@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, time
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -118,7 +119,11 @@ class StockMovement(models.Model):
 		if previous_quantity is not None and previous_movement_type is not None:
 			self.product.quantity -= movement_delta(previous_movement_type, previous_quantity)
 
-		self.product.quantity += movement_delta(self.movement_type, self.quantity)
+		new_quantity = self.product.quantity + movement_delta(self.movement_type, self.quantity)
+		if new_quantity < 0:
+			raise ValidationError('Insufficient stock for this movement.')
+
+		self.product.quantity = new_quantity
 		self.product.save()
 		super().save(*args, **kwargs)
 

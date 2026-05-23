@@ -24,8 +24,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-xxx')
 
+def _boolean_config(name, default=False):
+    value = config(name, default=default)
+    if isinstance(value, bool):
+        return value
+    normalized = str(value).strip().lower()
+    if normalized in {'1', 'true', 'yes', 'on', 'debug', 'development'}:
+        return True
+    if normalized in {'0', 'false', 'no', 'off', 'release', 'production'}:
+        return False
+    return bool(default)
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = _boolean_config('DEBUG', default=True)
 
 ALLOWED_HOSTS = [host.strip() for host in config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',') if host.strip()]
 if 'testserver' not in ALLOWED_HOSTS:

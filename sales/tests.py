@@ -1,4 +1,5 @@
 from decimal import Decimal
+import json
 from io import StringIO
 
 from django.contrib.auth import get_user_model
@@ -136,6 +137,68 @@ class BarcodeSearchTests(TestCase):
 
 		self.assertEqual(response.status_code, 400)
 		self.assertFalse(response.json()['success'])
+
+
+class CartValidationTests(TestCase):
+	def setUp(self):
+		User = get_user_model()
+		self.user = User.objects.create_user(username='cart-user', password='pass12345')
+		self.client.force_login(self.user)
+
+	def test_add_to_cart_rejects_negative_quantity(self):
+		product = Product.objects.create(
+			name='Cart Rose',
+			type='flower',
+			quantity=Decimal('5'),
+			purchase_price=Decimal('10.00'),
+			selling_price=Decimal('20.00'),
+		)
+
+		response = self.client.post(
+			reverse('sales:add_to_cart'),
+			data=json.dumps({'product_id': product.pk, 'quantity': '-1'}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('Quantity', response.json()['error'])
+
+
+class OfflineSyncTests(TestCase):
+	def setUp(self):
+		User = get_user_model()
+		self.user = User.objects.create_user(username='offline-user', password='pass12345')
+		self.client.force_login(self.user)
+
+	def test_sync_offline_sale_is_idempotent_by_client_sale_id(self):
+		product = Product.objects.create(
+			name='Offline Rose',
+			type='flower',
+			quantity=Decimal('5'),
+			purchase_price=Decimal('10.00'),
+			selling_price=Decimal('20.00'),
+		)
+		payload = {
+			'sales': [{
+				'client_sale_id': 'client-sale-1',
+				'items': [{'product_id': product.pk, 'quantity': '2', 'unit_price': '20.00'}],
+				'subtotal': '40.00',
+				'discount': '0',
+				'tax': '0',
+				'total': '40.00',
+				'paid_amount': '40.00',
+				'payment_method': 'cash',
+			}]
+		}
+
+		first = self.client.post(reverse('sales:sync_offline_sales'), data=json.dumps(payload), content_type='application/json')
+		second = self.client.post(reverse('sales:sync_offline_sales'), data=json.dumps(payload), content_type='application/json')
+
+		self.assertEqual(first.status_code, 200)
+		self.assertEqual(second.status_code, 200)
+		self.assertEqual(SaleItem.objects.filter(product=product).count(), 1)
+		product.refresh_from_db()
+		self.assertEqual(product.quantity, Decimal('3.00'))
 
 
 class SaleDeleteTests(TestCase):

@@ -9,13 +9,14 @@ from bidi.algorithm import get_display
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -94,6 +95,29 @@ def _cart(request):
 	return request.session.get('cart', {})
 
 
+def _json_body(request):
+	try:
+		return json.loads(request.body or '{}')
+	except json.JSONDecodeError:
+		return None
+
+
+def _positive_decimal(value, default=None):
+	try:
+		amount = Decimal(str(value if value not in {None, ''} else default))
+	except (InvalidOperation, TypeError):
+		return None
+	return amount if amount > 0 else None
+
+
+def _money_decimal(value, default='0'):
+	try:
+		amount = Decimal(str(value if value not in {None, ''} else default))
+	except (InvalidOperation, TypeError):
+		return None
+	return amount if amount >= 0 else None
+
+
 def _cart_items(request):
 	cart = _cart(request)
 	items = []
@@ -131,6 +155,7 @@ def pos(request):
 
 
 @login_required
+@ensure_csrf_cookie
 def pos_offline(request):
 	return render(request, 'sales/pos_offline.html')
 
@@ -177,13 +202,16 @@ def search_by_barcode(request):
 
 
 @login_required
-@csrf_exempt
 def add_to_cart(request):
 	if request.method != 'POST':
 		return JsonResponse({'error': 'Invalid request'}, status=400)
-	data = json.loads(request.body or '{}')
-	product = get_object_or_404(Product, pk=data.get('product_id'))
-	quantity = Decimal(str(data.get('quantity', '1')))
+	data = _json_body(request)
+	if data is None:
+		return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
+	product = get_object_or_404(Product, pk=data.get('product_id'), is_active=True)
+	quantity = _positive_decimal(data.get('quantity'), default='1')
+	if quantity is None:
+		return JsonResponse({'error': 'Quantity must be greater than zero'}, status=400)
 	if quantity > product.quantity:
 		return JsonResponse({'error': f'الكمية المتوفرة: {product.quantity}'}, status=400)
 
@@ -201,11 +229,12 @@ def add_to_cart(request):
 
 
 @login_required
-@csrf_exempt
 def remove_from_cart(request):
 	if request.method != 'POST':
 		return JsonResponse({'error': 'Invalid request'}, status=400)
-	data = json.loads(request.body or '{}')
+	data = _json_body(request)
+	if data is None:
+		return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
 	cart = request.session.get('cart', {})
 	cart.pop(str(data.get('product_id')), None)
 	request.session['cart'] = cart
@@ -213,13 +242,17 @@ def remove_from_cart(request):
 
 
 @login_required
-@csrf_exempt
 def update_cart(request):
 	if request.method != 'POST':
 		return JsonResponse({'error': 'Invalid request'}, status=400)
-	data = json.loads(request.body or '{}')
-	product = get_object_or_404(Product, pk=data.get('product_id'))
-	quantity = Decimal(str(data.get('quantity', '0')))
+	data = _json_body(request)
+	if data is None:
+		return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
+	product = get_object_or_404(Product, pk=data.get('product_id'), is_active=True)
+	try:
+		quantity = Decimal(str(data.get('quantity', '0')))
+	except (InvalidOperation, TypeError):
+		return JsonResponse({'error': 'Invalid quantity'}, status=400)
 	cart = request.session.get('cart', {})
 	product_id = str(product.pk)
 	if quantity <= 0:
@@ -245,15 +278,42 @@ def checkout(request):
 
 	subtotal = Decimal('0')
 	for item in cart.values():
-		subtotal += Decimal(str(item['quantity'])) * Decimal(str(item['price']))
+		quantity = _positive_decimal(item.get('quantity'))
+		price = _money_decimal(item.get('price'))
+		if quantity is None or price is None:
+			messages.error(request, 'تحتوي السلة على منتج بكمية أو سعر غير صالح')
+			return redirect('sales:pos')
+		subtotal += quantity * price
 
-	discount = Decimal(request.POST.get('discount', '0'))
-	tax = Decimal(request.POST.get('tax', '0'))
+	discount = _money_decimal(request.POST.get('discount'), default='0')
+	tax = _money_decimal(request.POST.get('tax'), default='0')
+	if discount is None or tax is None:
+		messages.error(request, 'تأكد من إدخال مبالغ صحيحة غير سالبة')
+		return redirect('sales:pos')
 	total = subtotal - discount + tax
-	paid_amount = Decimal(request.POST.get('paid_amount', '0'))
+	if total < 0:
+		messages.error(request, 'إجمالي الفاتورة لا يمكن أن يكون سالباً')
+		return redirect('sales:pos')
+	paid_amount = _money_decimal(request.POST.get('paid_amount'), default='0')
+	if paid_amount is None:
+		messages.error(request, 'تأكد من إدخال مبلغ مدفوع صحيح')
+		return redirect('sales:pos')
 	if paid_amount < total:
 		messages.error(request, 'المبلغ المدفوع أقل من إجمالي الفاتورة')
 		return redirect('sales:pos')
+
+	prepared_items = []
+	for product_id, item in cart.items():
+		product = get_object_or_404(Product.objects.select_for_update(), pk=product_id, is_active=True)
+		quantity = _positive_decimal(item.get('quantity'))
+		unit_price = _money_decimal(item.get('price'))
+		if quantity is None or unit_price is None:
+			messages.error(request, 'تحتوي السلة على منتج بكمية أو سعر غير صالح')
+			return redirect('sales:pos')
+		if quantity > product.quantity:
+			messages.error(request, f'الكمية المتوفرة من {product.name}: {product.quantity}')
+			return redirect('sales:pos')
+		prepared_items.append((product, quantity, unit_price))
 
 	customer = None
 	customer_id = request.POST.get('customer_id')
@@ -280,19 +340,21 @@ def checkout(request):
 		delivery_address=request.POST.get('delivery_address', ''),
 	)
 
-	for product_id, item in cart.items():
-		product = get_object_or_404(Product, pk=product_id)
-		quantity = Decimal(str(item['quantity']))
-		unit_price = Decimal(str(item['price']))
+	for product, quantity, unit_price in prepared_items:
 		SaleItem.objects.create(sale=sale, product=product, quantity=quantity, unit_price=unit_price, total=quantity * unit_price)
-		StockMovement.objects.create(
-			product=product,
-			quantity=quantity,
-			movement_type='out',
-			reference=f'INV-{sale.invoice_number}',
-			notes=f'بيع - فاتورة {sale.invoice_number}',
-			created_by=request.user,
-		)
+		try:
+			StockMovement.objects.create(
+				product=product,
+				quantity=quantity,
+				movement_type='out',
+				reference=f'INV-{sale.invoice_number}',
+				notes=f'بيع - فاتورة {sale.invoice_number}',
+				created_by=request.user,
+			)
+		except ValidationError:
+			transaction.set_rollback(True)
+			messages.error(request, f'المخزون غير كاف للمنتج {product.name}')
+			return redirect('sales:pos')
 
 	if customer:
 		customer.total_purchases += total
@@ -358,11 +420,9 @@ def invoice_edit(request, invoice_number):
 				return redirect('sales:invoice_edit', invoice_number=sale.invoice_number)
 
 			if stock_delta:
-				item.product.quantity += stock_delta
-				item.product.save(update_fields=['quantity', 'updated_at'])
 				StockMovement.objects.create(
 					product=item.product,
-					quantity=Decimal('0'),
+					quantity=stock_delta,
 					movement_type='adjust',
 					reference=f'EDIT-{sale.invoice_number}',
 					notes=f'تعديل فاتورة {sale.invoice_number}: فرق الكمية {stock_delta}',
@@ -421,11 +481,9 @@ def invoice_delete(request, invoice_number):
 	sale = get_object_or_404(Sale.objects.prefetch_related('items__product'), invoice_number=invoice_number)
 	for item in sale.items.select_related('product'):
 		product = item.product
-		product.quantity += item.quantity
-		product.save(update_fields=['quantity', 'updated_at'])
 		StockMovement.objects.create(
 			product=product,
-			quantity=Decimal('0'),
+			quantity=item.quantity,
 			movement_type='adjust',
 			reference=f'DELETE-{sale.invoice_number}',
 			notes=f'استرجاع {item.quantity} للمخزون بعد حذف الفاتورة {sale.invoice_number}',

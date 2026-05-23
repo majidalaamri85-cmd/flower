@@ -57,6 +57,7 @@ class OfflineManager {
   }
 
   async saveSaleOffline(saleData) {
+    saleData.client_sale_id = saleData.client_sale_id || this.createClientSaleId();
     if (!this.isOnline) {
       const saleId = await window.offlineDB.savePendingSale(saleData);
       const pendingSales = JSON.parse(localStorage.getItem('pending_sales') || '[]');
@@ -139,6 +140,13 @@ class OfflineManager {
       }
     }
     return cookieValue;
+  }
+
+  createClientSaleId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return window.crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 }
 
