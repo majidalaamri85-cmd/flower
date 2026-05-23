@@ -20,4 +20,4 @@ RUN mkdir -p /app/staticfiles /app/media /app/logs
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "gunicorn shop_management.wsgi:application --bind 0.0.0.0:$PORT"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py setup_permissions && python manage.py seed_expense_categories && python manage.py seed_data && gunicorn shop_management.wsgi:application --bind 0.0.0.0:$PORT"]
