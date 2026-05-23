@@ -20,4 +20,4 @@ RUN mkdir -p /app/staticfiles /app/media /app/logs
 
 EXPOSE 8000
 
-CMD ["gunicorn", "shop_management.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "shop_management.wsgi:application", "--bind", "0.0.0.0:PORT"]
