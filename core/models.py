@@ -8,7 +8,7 @@ class ShopSettings(models.Model):
     email = models.EmailField()
     address = models.TextField()
     tax_number = models.CharField(max_length=50, blank=True)
-    currency_symbol = models.CharField(max_length=10, default='ريال')
+    currency_symbol = models.CharField(max_length=10, default='ر.ع')
 
     def __str__(self):
         return self.shop_name

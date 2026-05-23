@@ -73,7 +73,7 @@ def expense_create(request):
 			expense = form.save(commit=False)
 			expense.created_by = request.user
 			expense.save()
-			messages.success(request, f'تم إضافة المصروف بنجاح: {expense.category.name} - {expense.amount} ريال')
+			messages.success(request, f'تم إضافة المصروف بنجاح: {expense.category.name} - {expense.amount} ر.ع')
 			return redirect('accounts:expense_list')
 		messages.error(request, 'حدث خطأ في إدخال البيانات، يرجى التحقق.')
 	else:

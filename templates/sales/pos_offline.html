@@ -58,7 +58,7 @@
             <div class="card-footer bg-white">
                 <div class="d-flex justify-content-between cart-total-line">
                     <span>الإجمالي</span>
-                    <strong id="cartTotal">0 ريال</strong>
+                    <strong id="cartTotal">0 {{ settings.currency_symbol }}</strong>
                 </div>
                 <button class="btn btn-success w-100 mt-3" type="button" onclick="processCheckout()">إنهاء الطلب</button>
             </div>
@@ -69,7 +69,7 @@
 <div class="pos-mobile-bar d-lg-none">
     <div class="pos-mobile-bar__summary">
         <small>الإجمالي الحالي</small>
-        <strong id="mobileCartTotal">0 ريال</strong>
+        <strong id="mobileCartTotal">0 {{ settings.currency_symbol }}</strong>
     </div>
     <div class="pos-mobile-bar__actions">
         <button class="btn btn-light" type="button" onclick="scrollToCartPanel()">عرض السلة</button>
@@ -110,7 +110,7 @@ function displayProducts(products) {
                         <h6 class="mb-2">${product.name}</h6>
                     </div>
                     <div>
-                        <div class="text-primary fw-semibold mb-1">${product.selling_price} ريال</div>
+                        <div class="text-primary fw-semibold mb-1">${product.selling_price} {{ settings.currency_symbol }}</div>
                         <small class="text-muted">المتوفر: ${product.quantity}</small>
                     </div>
                 </div>
@@ -169,7 +169,7 @@ function updateCartDisplay() {
                 <div class="d-flex justify-content-between align-items-center gap-2">
                     <div>
                         <div class="fw-semibold">${item.name}</div>
-                        <small>${item.quantity} × ${item.price} = ${(item.quantity * item.price).toFixed(2)} ريال</small>
+                        <small>${item.quantity} × ${item.price} = ${(item.quantity * item.price).toFixed(2)} {{ settings.currency_symbol }}</small>
                     </div>
                     <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${idx})">حذف</button>
                 </div>
@@ -177,8 +177,8 @@ function updateCartDisplay() {
         `;
     });
 
-    cartTotal.textContent = `${total.toFixed(2)} ريال`;
-    mobileCartTotal.textContent = `${total.toFixed(2)} ريال`;
+    cartTotal.textContent = `${total.toFixed(2)} {{ settings.currency_symbol }}`;
+    mobileCartTotal.textContent = `${total.toFixed(2)} {{ settings.currency_symbol }}`;
 }
 
 async function processCheckout() {

@@ -10,9 +10,9 @@
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card panel"><div class="card-body">إجمالي المصروفات<br><strong>{{ total_expenses }} ريال</strong></div></div></div>
-    <div class="col-md-3"><div class="card panel"><div class="card-body">هذا الشهر<br><strong>{{ month_expenses }} ريال</strong></div></div></div>
-    <div class="col-md-3"><div class="card panel"><div class="card-body">هذا الأسبوع<br><strong>{{ week_expenses }} ريال</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">إجمالي المصروفات<br><strong>{{ total_expenses }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">هذا الشهر<br><strong>{{ month_expenses }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel"><div class="card-body">هذا الأسبوع<br><strong>{{ week_expenses }} {{ settings.currency_symbol }}</strong></div></div></div>
     <div class="col-md-3"><div class="card panel"><div class="card-body">عدد النتائج<br><strong>{{ expenses.paginator.count }}</strong></div></div></div>
 </div>
 
@@ -53,7 +53,7 @@
                     <td>{{ expense.expense_date|date:'Y-m-d' }}</td>
                     <td><span class="badge bg-{{ expense.category.color }}"><i class="{{ expense.category.icon }}"></i> {{ expense.category.name }}</span></td>
                     <td>{{ expense.description|truncatechars:30 }}</td>
-                    <td class="fw-bold text-danger">{{ expense.amount }} ريال</td>
+                    <td class="fw-bold text-danger">{{ expense.amount }} {{ settings.currency_symbol }}</td>
                     <td>{{ expense.get_payment_method_display }}</td>
                     <td>{{ expense.receipt_number|default:'-' }}</td>
                     <td>{{ expense.created_by.username|default:'-' }}</td>

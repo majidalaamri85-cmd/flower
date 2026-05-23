@@ -37,7 +37,7 @@
 							<div class="col-md-6">
 								<label class="form-label fw-semibold">المبلغ</label>
 								<div class="input-group">
-									<span class="input-group-text">ريال</span>
+									<span class="input-group-text">{{ settings.currency_symbol }}</span>
 									{{ form.amount }}
 								</div>
 								{% if form.amount.errors %}<div class="text-danger small mt-1">{{ form.amount.errors|join:', ' }}</div>{% endif %}
@@ -89,7 +89,7 @@
 			<div class="expense-stats">
 				<h6><i class="fas fa-chart-line"></i> إحصائيات سريعة</h6>
 				<hr>
-				<div>إجمالي هذا الشهر: <strong>{{ month_expenses|default:'0' }} ريال</strong></div>
+				<div>إجمالي هذا الشهر: <strong>{{ month_expenses|default:'0' }} {{ settings.currency_symbol }}</strong></div>
 			</div>
 
 			<div class="card panel">
@@ -98,7 +98,7 @@
 					{% for stat in categories_stats %}
 					<div class="d-flex justify-content-between small border-bottom py-2">
 						<span>{{ stat.name }}</span>
-						<span class="text-muted">{{ stat.month_total }} ريال</span>
+						<span class="text-muted">{{ stat.month_total }} {{ settings.currency_symbol }}</span>
 					</div>
 					{% empty %}
 					<p class="text-muted mb-0">لا توجد إحصائيات حتى الآن</p>
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					descSpan.innerHTML = `<strong>${data.category.name}</strong><br>${data.category.description || 'لا يوجد وصف'}`;
 					detailsDiv.style.display = 'block';
 					if (amountField && !amountField.value && data.category.avg_amount > 0) {
-						amountField.placeholder = `المتوسط السابق: ${data.category.avg_amount.toFixed(2)} ريال`;
+						amountField.placeholder = `المتوسط السابق: ${data.category.avg_amount.toFixed(2)} {{ settings.currency_symbol }}`;
 					}
 				})
 				.catch(() => {

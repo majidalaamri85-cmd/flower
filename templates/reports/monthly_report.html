@@ -10,9 +10,9 @@
 </div></div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-4"><div class="card panel"><div class="card-body">إجمالي المبيعات: <strong>{{ total_sales }}</strong></div></div></div>
-    <div class="col-md-4"><div class="card panel"><div class="card-body">إجمالي المصروفات: <strong>{{ total_expenses }}</strong></div></div></div>
-    <div class="col-md-4"><div class="card panel"><div class="card-body">صافي الربح: <strong>{{ net_profit }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel"><div class="card-body">إجمالي المبيعات: <strong>{{ total_sales }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel"><div class="card-body">إجمالي المصروفات: <strong>{{ total_expenses }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel"><div class="card-body">صافي الربح: <strong>{{ net_profit }} {{ settings.currency_symbol }}</strong></div></div></div>
 </div>
 
 <div class="card panel table-surface"><div class="card-body">
@@ -22,7 +22,7 @@
         <thead><tr><th>العميل</th><th>إجمالي الإنفاق</th><th>عدد المشتريات</th></tr></thead>
         <tbody>
         {% for customer in top_customers %}
-            <tr><td>{{ customer.customer__name|default:'نقدي' }}</td><td>{{ customer.total_spent }}</td><td>{{ customer.purchase_count }}</td></tr>
+            <tr><td>{{ customer.customer__name|default:'نقدي' }}</td><td>{{ customer.total_spent }} {{ settings.currency_symbol }}</td><td>{{ customer.purchase_count }}</td></tr>
         {% empty %}<tr><td colspan="3">لا توجد بيانات</td></tr>{% endfor %}
         </tbody>
     </table>

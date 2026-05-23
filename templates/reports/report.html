@@ -4,9 +4,9 @@
 <div class="card panel"><div class="card-body p-4">
     <h3 class="mb-4">{{ title }}</h3>
     <div class="row g-3">
-        <div class="col-md-4"><div class="summary-chip summary-chip-soft w-100">المبيعات: <strong class="ms-2">{{ sales_total }}</strong></div></div>
-        <div class="col-md-4"><div class="summary-chip summary-chip-warm w-100">المصروفات: <strong class="ms-2">{{ expenses_total }}</strong></div></div>
-        <div class="col-md-4"><div class="summary-chip w-100">الربح: <strong class="ms-2">{{ profit }}</strong></div></div>
+        <div class="col-md-4"><div class="summary-chip summary-chip-soft w-100">المبيعات: <strong class="ms-2">{{ sales_total }} {{ settings.currency_symbol }}</strong></div></div>
+        <div class="col-md-4"><div class="summary-chip summary-chip-warm w-100">المصروفات: <strong class="ms-2">{{ expenses_total }} {{ settings.currency_symbol }}</strong></div></div>
+        <div class="col-md-4"><div class="summary-chip w-100">الربح: <strong class="ms-2">{{ profit }} {{ settings.currency_symbol }}</strong></div></div>
     </div>
     {% if sales_count is not None %}<div class="mt-3 text-muted">عدد الفواتير: {{ sales_count }}</div>{% endif %}
 </div></div>

@@ -23,7 +23,7 @@ class ExpenseForm(forms.ModelForm):
                     'class': 'form-control',
                     'step': '0.01',
                     'min': '0',
-                    'placeholder': 'المبلغ بالريال',
+                    'placeholder': 'المبلغ بالريال العماني',
                 }
             ),
             'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'وصف المصروف'}),

@@ -17,8 +17,8 @@
 
 <div class="row g-3 mb-3">
     <div class="col-md-4"><div class="card panel stat-tile stat-tile-sales"><div class="card-body"><small class="text-muted d-block mb-2">العميل</small><strong class="invoice-meta-value">{{ sale.customer.name|default:'نقدي' }}</strong></div></div></div>
-    <div class="col-md-4"><div class="card panel stat-tile stat-tile-stock"><div class="card-body"><small class="text-muted d-block mb-2">الإجمالي</small><strong class="invoice-meta-value">{{ sale.total }}</strong></div></div></div>
-    <div class="col-md-4"><div class="card panel stat-tile stat-tile-profit"><div class="card-body"><small class="text-muted d-block mb-2">المدفوع</small><strong class="invoice-meta-value">{{ sale.paid_amount }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel stat-tile stat-tile-stock"><div class="card-body"><small class="text-muted d-block mb-2">الإجمالي</small><strong class="invoice-meta-value">{{ sale.total }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel stat-tile stat-tile-profit"><div class="card-body"><small class="text-muted d-block mb-2">المدفوع</small><strong class="invoice-meta-value">{{ sale.paid_amount }} {{ settings.currency_symbol }}</strong></div></div></div>
 </div>
 
 <div class="card panel table-surface mb-3">
@@ -28,7 +28,7 @@
                 <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
                 <tbody>
                 {% for item in sale.items.all %}
-                    <tr><td>{{ item.product.name }}</td><td>{{ item.quantity }}</td><td>{{ item.unit_price }}</td><td>{{ item.total }}</td></tr>
+                    <tr><td>{{ item.product.name }}</td><td>{{ item.quantity }}</td><td>{{ item.unit_price }} {{ settings.currency_symbol }}</td><td>{{ item.total }} {{ settings.currency_symbol }}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -39,12 +39,12 @@
 <div class="card panel">
     <div class="card-body p-4">
         <div class="invoice-summary-grid text-end">
-            <div class="invoice-summary-row"><span>المجموع الفرعي</span><strong>{{ sale.subtotal }}</strong></div>
-            <div class="invoice-summary-row"><span>الخصم</span><strong>{{ sale.discount }}</strong></div>
-            <div class="invoice-summary-row"><span>الضريبة</span><strong>{{ sale.tax }}</strong></div>
-            <div class="invoice-summary-row invoice-summary-row-total"><span>الإجمالي</span><strong>{{ sale.total }}</strong></div>
-            <div class="invoice-summary-row"><span>المدفوع</span><strong>{{ sale.paid_amount }}</strong></div>
-            <div class="invoice-summary-row"><span>الباقي</span><strong>{{ sale.change_amount }}</strong></div>
+            <div class="invoice-summary-row"><span>المجموع الفرعي</span><strong>{{ sale.subtotal }} {{ settings.currency_symbol }}</strong></div>
+            <div class="invoice-summary-row"><span>الخصم</span><strong>{{ sale.discount }} {{ settings.currency_symbol }}</strong></div>
+            <div class="invoice-summary-row"><span>الضريبة</span><strong>{{ sale.tax }} {{ settings.currency_symbol }}</strong></div>
+            <div class="invoice-summary-row invoice-summary-row-total"><span>الإجمالي</span><strong>{{ sale.total }} {{ settings.currency_symbol }}</strong></div>
+            <div class="invoice-summary-row"><span>المدفوع</span><strong>{{ sale.paid_amount }} {{ settings.currency_symbol }}</strong></div>
+            <div class="invoice-summary-row"><span>الباقي</span><strong>{{ sale.change_amount }} {{ settings.currency_symbol }}</strong></div>
         </div>
     </div>
 </div>

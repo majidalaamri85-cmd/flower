@@ -53,7 +53,7 @@
             <div class="card-body">
                 <div id="cartItems">{% include 'sales/partials/cart_items.html' %}</div>
                 <hr>
-                <div class="d-flex justify-content-between cart-total-line"><strong>الإجمالي</strong><strong id="cartTotal">{{ cart_total }} ريال</strong></div>
+                <div class="d-flex justify-content-between cart-total-line"><strong>الإجمالي</strong><strong id="cartTotal">{{ cart_total }} {{ settings.currency_symbol }}</strong></div>
                 <button class="btn btn-success w-100 mt-3" data-bs-toggle="modal" data-bs-target="#checkoutModal">إنهاء الطلب</button>
             </div>
         </div>
@@ -63,7 +63,7 @@
 <div class="pos-mobile-bar d-lg-none">
     <div class="pos-mobile-bar__summary">
         <small>الإجمالي الحالي</small>
-        <strong id="mobileCartTotal">{{ cart_total }} ريال</strong>
+        <strong id="mobileCartTotal">{{ cart_total }} {{ settings.currency_symbol }}</strong>
     </div>
     <div class="pos-mobile-bar__actions">
         <button class="btn btn-light" type="button" onclick="scrollToCartPanel()">عرض السلة</button>

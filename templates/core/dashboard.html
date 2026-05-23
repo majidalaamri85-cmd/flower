@@ -15,8 +15,8 @@
     </div>
 </div>
 <div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card panel stat-tile stat-tile-sales"><div class="card-body"><small class="text-muted">مبيعات اليوم</small><h4 class="stat-value mt-2">{{ today_total }} ريال</h4><div class="text-muted">{{ today_count }} فاتورة</div></div></div></div>
-    <div class="col-md-3"><div class="card panel stat-tile stat-tile-profit"><div class="card-body"><small class="text-muted">صافي الربح اليوم</small><h4 class="stat-value mt-2">{{ today_profit }} ريال</h4><div class="text-muted">المصروفات: {{ today_expenses }} ريال</div></div></div></div>
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-sales"><div class="card-body"><small class="text-muted">مبيعات اليوم</small><h4 class="stat-value mt-2">{{ today_total }} {{ settings.currency_symbol }}</h4><div class="text-muted">{{ today_count }} فاتورة</div></div></div></div>
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-profit"><div class="card-body"><small class="text-muted">صافي الربح اليوم</small><h4 class="stat-value mt-2">{{ today_profit }} {{ settings.currency_symbol }}</h4><div class="text-muted">المصروفات: {{ today_expenses }} {{ settings.currency_symbol }}</div></div></div></div>
     <div class="col-md-3"><div class="card panel stat-tile stat-tile-stock"><div class="card-body"><small class="text-muted">منخفض المخزون</small><h4 class="stat-value mt-2">{{ low_stock_count }}</h4><div class="text-muted">منتجات تحتاج إعادة طلب</div></div></div></div>
     <div class="col-md-3"><div class="card panel stat-tile stat-tile-alert"><div class="card-body"><small class="text-muted">الورود القريبة من الانتهاء</small><h4 class="stat-value mt-2">{{ expiring_flowers_count }}</h4><div class="text-muted">خلال الفترة الحالية</div></div></div></div>
 </div>

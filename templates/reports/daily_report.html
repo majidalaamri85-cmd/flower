@@ -15,10 +15,10 @@
 </div></div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card panel stat-tile stat-tile-sales"><div class="card-body"><small class="text-muted d-block mb-2">إجمالي المبيعات</small><strong class="stat-value">{{ total_sales }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-sales"><div class="card-body"><small class="text-muted d-block mb-2">إجمالي المبيعات</small><strong class="stat-value">{{ total_sales }} {{ settings.currency_symbol }}</strong></div></div></div>
     <div class="col-md-3"><div class="card panel stat-tile stat-tile-stock"><div class="card-body"><small class="text-muted d-block mb-2">عدد الفواتير</small><strong class="stat-value">{{ sales_count }}</strong></div></div></div>
-    <div class="col-md-3"><div class="card panel stat-tile stat-tile-alert"><div class="card-body"><small class="text-muted d-block mb-2">إجمالي المصروفات</small><strong class="stat-value">{{ total_expenses }}</strong></div></div></div>
-    <div class="col-md-3"><div class="card panel stat-tile stat-tile-profit"><div class="card-body"><small class="text-muted d-block mb-2">صافي الربح</small><strong class="stat-value">{{ net_profit }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-alert"><div class="card-body"><small class="text-muted d-block mb-2">إجمالي المصروفات</small><strong class="stat-value">{{ total_expenses }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-profit"><div class="card-body"><small class="text-muted d-block mb-2">صافي الربح</small><strong class="stat-value">{{ net_profit }} {{ settings.currency_symbol }}</strong></div></div></div>
 </div>
 
 <div class="card panel table-surface">
@@ -29,7 +29,7 @@
             <thead><tr><th>المنتج</th><th>النوع</th><th>الكمية</th><th>الإيراد</th></tr></thead>
             <tbody>
                 {% for item in top_products %}
-                <tr><td>{{ item.product__name }}</td><td>{{ item.product__type }}</td><td>{{ item.total_quantity }}</td><td>{{ item.total_revenue }}</td></tr>
+                <tr><td>{{ item.product__name }}</td><td>{{ item.product__type }}</td><td>{{ item.total_quantity }}</td><td>{{ item.total_revenue }} {{ settings.currency_symbol }}</td></tr>
                 {% empty %}<tr><td colspan="4">لا توجد بيانات</td></tr>{% endfor %}
             </tbody>
         </table>

@@ -51,7 +51,7 @@ class Expense(models.Model):
 	notes = models.TextField(blank=True)
 
 	def __str__(self):
-		return f"{self.category.name} - {self.amount} ريال - {self.expense_date}"
+		return f"{self.category.name} - {self.amount} ر.ع - {self.expense_date}"
 
 	class Meta:
 		verbose_name = 'مصروف'

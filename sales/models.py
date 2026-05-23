@@ -70,7 +70,7 @@ class Sale(models.Model):
 		super().save(*args, **kwargs)
 
 	def __str__(self):
-		return f"فاتورة {self.invoice_number} - {self.total} ريال"
+		return f"فاتورة {self.invoice_number} - {self.total} ر.ع"
 
 	class Meta:
 		verbose_name = 'بيعة'
@@ -108,7 +108,7 @@ class BundleOffer(models.Model):
 		return self.regular_price - self.bundle_price
 
 	def __str__(self):
-		return f"{self.name} - توفير {self.savings} ريال"
+		return f"{self.name} - توفير {self.savings} ر.ع"
 
 
 class OfflineSaleQueue(models.Model):

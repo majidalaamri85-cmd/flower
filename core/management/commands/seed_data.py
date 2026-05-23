@@ -39,7 +39,7 @@ class Command(BaseCommand):
                 'email': 'info@roseshocolate.com',
                 'address': 'الرياض - المملكة العربية السعودية',
                 'tax_number': '1234567890',
-                'currency_symbol': 'ريال',
+                'currency_symbol': 'ر.ع',
             },
         )
         if created:

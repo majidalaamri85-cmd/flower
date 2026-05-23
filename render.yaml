@@ -34,6 +34,8 @@ services:
         value: +966500000000
       - key: SHOP_EMAIL
         value: info@example.com
+      - key: CURRENCY_SYMBOL
+        value: ر.ع
     healthCheckPath: /login/
     autoDeploy: true
 

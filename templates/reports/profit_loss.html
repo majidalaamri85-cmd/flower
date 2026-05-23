@@ -2,11 +2,11 @@
 {% block title %}الأرباح والخسائر{% endblock %}
 {% block content %}
 <div class="row g-3">
-    <div class="col-md-4"><div class="card panel"><div class="card-body">الإيرادات: <strong>{{ revenue }}</strong></div></div></div>
-    <div class="col-md-4"><div class="card panel"><div class="card-body">تكلفة البضاعة المباعة: <strong>{{ cogs }}</strong></div></div></div>
-    <div class="col-md-4"><div class="card panel"><div class="card-body">إجمالي الربح: <strong>{{ gross_profit }}</strong></div></div></div>
-    <div class="col-md-6"><div class="card panel"><div class="card-body">المصاريف التشغيلية: <strong>{{ operating_expenses }}</strong></div></div></div>
-    <div class="col-md-6"><div class="card panel"><div class="card-body">صافي الربح: <strong>{{ net_profit }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel"><div class="card-body">الإيرادات: <strong>{{ revenue }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel"><div class="card-body">تكلفة البضاعة المباعة: <strong>{{ cogs }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-4"><div class="card panel"><div class="card-body">إجمالي الربح: <strong>{{ gross_profit }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-6"><div class="card panel"><div class="card-body">المصاريف التشغيلية: <strong>{{ operating_expenses }} {{ settings.currency_symbol }}</strong></div></div></div>
+    <div class="col-md-6"><div class="card panel"><div class="card-body">صافي الربح: <strong>{{ net_profit }} {{ settings.currency_symbol }}</strong></div></div></div>
 </div>
 <div class="alert alert-info mt-3">هامش الربح الإجمالي: {{ gross_margin|floatformat:2 }}%</div>
 {% endblock %}

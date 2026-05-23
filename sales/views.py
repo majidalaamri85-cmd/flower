@@ -326,6 +326,8 @@ def invoice_detail(request, invoice_number):
 def invoice_pdf(request, invoice_number):
 	sale = get_object_or_404(Sale.objects.prefetch_related('items__product').select_related('customer', 'employee'), invoice_number=invoice_number)
 	_register_pdf_fonts()
+	shop = ShopSettings.objects.first()
+	currency_symbol = shop.currency_symbol if shop and shop.currency_symbol else 'ر.ع'
 	buffer = BytesIO()
 	doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5 * cm, leftMargin=1.5 * cm, topMargin=1.5 * cm, bottomMargin=1.5 * cm)
 	styles = getSampleStyleSheet()
@@ -335,7 +337,6 @@ def invoice_pdf(request, invoice_number):
 	footer_style = ParagraphStyle('InvoiceFooter', parent=normal_style, alignment=1, fontName=_PDF_FONT_BOLD, textColor=colors.HexColor('#4f8a5b'))
 	elements = [_pdf_paragraph(f'فاتورة رقم {sale.invoice_number}', title_style), Spacer(1, 12)]
 
-	shop = ShopSettings.objects.first()
 	if shop:
 		shop_data = [
 			[_pdf_paragraph(shop.shop_name, bold_style), _pdf_paragraph('اسم المحل', normal_style)],
@@ -382,18 +383,18 @@ def invoice_pdf(request, invoice_number):
 	]]
 	for item in sale.items.all():
 		table_data.append([
-			_pdf_paragraph(f'{item.total} ريال', normal_style),
-			_pdf_paragraph(f'{item.unit_price} ريال', normal_style),
+			_pdf_paragraph(f'{item.total} {currency_symbol}', normal_style),
+			_pdf_paragraph(f'{item.unit_price} {currency_symbol}', normal_style),
 			_pdf_paragraph(item.quantity, normal_style),
 			_pdf_paragraph(item.product.name, normal_style),
 		])
 	table_data.extend([
-		[_pdf_paragraph(f'{sale.subtotal} ريال', normal_style), _pdf_paragraph('المجموع الفرعي', bold_style), '', ''],
-		[_pdf_paragraph(f'{sale.discount} ريال', normal_style), _pdf_paragraph('الخصم', bold_style), '', ''],
-		[_pdf_paragraph(f'{sale.tax} ريال', normal_style), _pdf_paragraph('الضريبة', bold_style), '', ''],
-		[_pdf_paragraph(f'{sale.total} ريال', bold_style), _pdf_paragraph('الإجمالي', bold_style), '', ''],
-		[_pdf_paragraph(f'{sale.paid_amount} ريال', normal_style), _pdf_paragraph('المدفوع', bold_style), '', ''],
-		[_pdf_paragraph(f'{sale.change_amount} ريال', normal_style), _pdf_paragraph('الباقي', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.subtotal} {currency_symbol}', normal_style), _pdf_paragraph('المجموع الفرعي', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.discount} {currency_symbol}', normal_style), _pdf_paragraph('الخصم', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.tax} {currency_symbol}', normal_style), _pdf_paragraph('الضريبة', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.total} {currency_symbol}', bold_style), _pdf_paragraph('الإجمالي', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.paid_amount} {currency_symbol}', normal_style), _pdf_paragraph('المدفوع', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.change_amount} {currency_symbol}', normal_style), _pdf_paragraph('الباقي', bold_style), '', ''],
 	])
 	table = Table(table_data, colWidths=[3.5 * cm, 3.5 * cm, 2.5 * cm, 6.5 * cm], hAlign='RIGHT')
 	table.setStyle(TableStyle([

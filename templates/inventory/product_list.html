@@ -64,8 +64,8 @@
                         </td>
                         <td>{{ product.get_type_display }}</td>
                         <td>{{ product.quantity }}</td>
-                        <td>{{ product.purchase_price }}</td>
-                        <td>{{ product.selling_price }}</td>
+                        <td>{{ product.purchase_price }} {{ settings.currency_symbol }}</td>
+                        <td>{{ product.selling_price }} {{ settings.currency_symbol }}</td>
                         <td>{{ product.profit_margin|floatformat:1 }}%</td>
                         <td>
                             {% if product.is_expiring_soon %}<span class="badge bg-danger">ينتهي قريبًا</span>{% endif %}

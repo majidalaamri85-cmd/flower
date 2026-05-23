@@ -14,4 +14,4 @@ class ExpenseModelTests(TestCase):
 			description='فاتورة كهرباء',
 		)
 
-		self.assertIn('تشغيل - 150.50 ريال', str(expense))
+		self.assertIn('تشغيل - 150.50 ر.ع', str(expense))

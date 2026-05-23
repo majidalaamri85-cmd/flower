@@ -8,7 +8,7 @@
                 <div class="text-muted small mb-2">متوفر الآن ضمن نتائج البحث</div>
             </div>
             <div class="d-flex justify-content-between align-items-center">
-                <strong class="text-primary">{{ product.selling_price }} ريال</strong>
+                <strong class="text-primary">{{ product.selling_price }} {{ settings.currency_symbol }}</strong>
                 <button type="button" class="btn btn-sm btn-primary" onclick="addToCart({{ product.id }})">إضافة</button>
             </div>
         </div>
