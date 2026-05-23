@@ -1,6 +1,6 @@
 import json
 import os
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from io import BytesIO
 from datetime import timedelta
 
@@ -321,6 +321,97 @@ def invoice_list(request):
 def invoice_detail(request, invoice_number):
 	sale = get_object_or_404(Sale.objects.select_related('customer', 'employee').prefetch_related('items__product'), invoice_number=invoice_number)
 	return render(request, 'sales/invoice_detail.html', {'sale': sale})
+
+
+@login_required
+@transaction.atomic
+def invoice_edit(request, invoice_number):
+	sale = get_object_or_404(Sale.objects.select_related('customer').prefetch_related('items__product'), invoice_number=invoice_number)
+	customers = Customer.objects.order_by('name')
+	if request.method == 'POST':
+		old_total = sale.total
+		old_customer = sale.customer
+		try:
+			discount = Decimal(request.POST.get('discount', '0') or '0')
+			tax = Decimal(request.POST.get('tax', '0') or '0')
+			paid_amount = Decimal(request.POST.get('paid_amount', '0') or '0')
+		except InvalidOperation:
+			messages.error(request, 'تأكد من إدخال أرقام صحيحة في المبالغ')
+			return redirect('sales:invoice_edit', invoice_number=sale.invoice_number)
+
+		subtotal = Decimal('0')
+		for item in sale.items.select_related('product'):
+			try:
+				new_quantity = Decimal(request.POST.get(f'item_{item.pk}_quantity', item.quantity) or '0')
+				new_unit_price = Decimal(request.POST.get(f'item_{item.pk}_unit_price', item.unit_price) or '0')
+			except InvalidOperation:
+				messages.error(request, f'تأكد من كمية وسعر المنتج: {item.product.name}')
+				return redirect('sales:invoice_edit', invoice_number=sale.invoice_number)
+
+			if new_quantity < 0 or new_unit_price < 0:
+				messages.error(request, 'الكمية والسعر لا يمكن أن تكون سالبة')
+				return redirect('sales:invoice_edit', invoice_number=sale.invoice_number)
+
+			stock_delta = item.quantity - new_quantity
+			if stock_delta < 0 and item.product.quantity < abs(stock_delta):
+				messages.error(request, f'المخزون غير كاف لزيادة كمية {item.product.name}')
+				return redirect('sales:invoice_edit', invoice_number=sale.invoice_number)
+
+			if stock_delta:
+				item.product.quantity += stock_delta
+				item.product.save(update_fields=['quantity', 'updated_at'])
+				StockMovement.objects.create(
+					product=item.product,
+					quantity=Decimal('0'),
+					movement_type='adjust',
+					reference=f'EDIT-{sale.invoice_number}',
+					notes=f'تعديل فاتورة {sale.invoice_number}: فرق الكمية {stock_delta}',
+					created_by=request.user,
+				)
+
+			if new_quantity == 0:
+				item.delete()
+				continue
+
+			item.quantity = new_quantity
+			item.unit_price = new_unit_price
+			item.total = new_quantity * new_unit_price
+			item.save(update_fields=['quantity', 'unit_price', 'total'])
+			subtotal += item.total
+
+		total = subtotal - discount + tax
+		if total < 0:
+			messages.error(request, 'إجمالي الفاتورة لا يمكن أن يكون سالباً')
+			return redirect('sales:invoice_edit', invoice_number=sale.invoice_number)
+		if paid_amount < total:
+			messages.error(request, 'المبلغ المدفوع أقل من إجمالي الفاتورة')
+			return redirect('sales:invoice_edit', invoice_number=sale.invoice_number)
+
+		customer_id = request.POST.get('customer_id')
+		sale.customer = Customer.objects.filter(pk=customer_id).first() if customer_id else None
+		sale.subtotal = subtotal
+		sale.discount = discount
+		sale.tax = tax
+		sale.total = total
+		sale.paid_amount = paid_amount
+		sale.payment_method = request.POST.get('payment_method', sale.payment_method)
+		sale.notes = request.POST.get('notes', '')
+		sale.is_delivery = request.POST.get('is_delivery') == 'on'
+		sale.delivery_address = request.POST.get('delivery_address', '')
+		sale.save()
+
+		if old_customer:
+			old_customer.total_purchases = max(old_customer.total_purchases - old_total, Decimal('0'))
+			old_customer.save(update_fields=['total_purchases'])
+		if sale.customer:
+			sale.customer.total_purchases += sale.total
+			sale.customer.last_purchase_date = timezone.now()
+			sale.customer.save(update_fields=['total_purchases', 'last_purchase_date'])
+
+		messages.success(request, f'تم تعديل الفاتورة {sale.invoice_number} بنجاح')
+		return redirect('sales:invoice_detail', invoice_number=sale.invoice_number)
+
+	return render(request, 'sales/invoice_form.html', {'sale': sale, 'customers': customers})
 
 
 @login_required

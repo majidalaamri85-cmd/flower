@@ -171,3 +171,51 @@ class SaleDeleteTests(TestCase):
 		product.refresh_from_db()
 		self.assertEqual(product.quantity, Decimal('5'))
 		self.assertTrue(StockMovement.objects.filter(reference=f'DELETE-{sale.invoice_number}', movement_type='adjust').exists())
+
+
+class SaleEditTests(TestCase):
+	def setUp(self):
+		User = get_user_model()
+		self.user = User.objects.create_user(username='editor', password='pass12345')
+		self.client.force_login(self.user)
+
+	def test_edit_sale_quantity_updates_stock_and_totals(self):
+		product = Product.objects.create(
+			name='Editable Rose',
+			type='flower',
+			quantity=Decimal('5'),
+			purchase_price=Decimal('10.00'),
+			selling_price=Decimal('20.00'),
+		)
+		sale = Sale.objects.create(
+			invoice_number='',
+			subtotal=Decimal('40.00'),
+			total=Decimal('40.00'),
+			paid_amount=Decimal('40.00'),
+		)
+		item = SaleItem.objects.create(
+			sale=sale,
+			product=product,
+			quantity=Decimal('2'),
+			unit_price=Decimal('20.00'),
+			total=Decimal('40.00'),
+		)
+
+		response = self.client.post(reverse('sales:invoice_edit', args=[sale.invoice_number]), {
+			f'item_{item.pk}_quantity': '3',
+			f'item_{item.pk}_unit_price': '20.00',
+			'discount': '0',
+			'tax': '0',
+			'paid_amount': '60.00',
+			'payment_method': 'cash',
+			'notes': '',
+		})
+
+		self.assertRedirects(response, reverse('sales:invoice_detail', args=[sale.invoice_number]))
+		sale.refresh_from_db()
+		item.refresh_from_db()
+		product.refresh_from_db()
+		self.assertEqual(item.quantity, Decimal('3.00'))
+		self.assertEqual(sale.total, Decimal('60.00'))
+		self.assertEqual(product.quantity, Decimal('4.00'))
+		self.assertTrue(StockMovement.objects.filter(reference=f'EDIT-{sale.invoice_number}', movement_type='adjust').exists())

@@ -25,6 +25,7 @@
                         <td>{{ sale.created_at }}</td>
                         <td class="table-actions d-flex flex-wrap gap-1">
                             <a class="btn btn-sm btn-outline-primary" href="{% url 'sales:invoice_detail' sale.invoice_number %}">عرض</a>
+                            <a class="btn btn-sm btn-outline-info" href="{% url 'sales:invoice_edit' sale.invoice_number %}">تعديل</a>
                             <form method="post" action="{% url 'sales:invoice_delete' sale.invoice_number %}" onsubmit="return confirm('هل تريد حذف هذه الفاتورة واسترجاع الكميات للمخزون؟');">
                                 {% csrf_token %}
                                 <button class="btn btn-sm btn-outline-danger" type="submit">حذف</button>

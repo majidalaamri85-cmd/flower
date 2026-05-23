@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}تعديل فاتورة {{ sale.invoice_number }}{% endblock %}
+{% block content %}
+<div class="page-hero panel p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <span class="page-kicker text-primary">تعديل المبيعات</span>
+            <h3 class="mb-1">تعديل فاتورة {{ sale.invoice_number }}</h3>
+            <p class="mb-0 text-muted">يمكن تعديل بيانات الدفع والكميات والأسعار، وسيتم تحديث المخزون حسب فرق الكمية.</p>
+        </div>
+        <a class="btn btn-light border" href="{% url 'sales:invoice_detail' sale.invoice_number %}">إلغاء</a>
+    </div>
+</div>
+
+<form method="post" class="stacked-form">
+    {% csrf_token %}
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card panel table-surface">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">عناصر الفاتورة</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead><tr><th>المنتج</th><th>المتوفر</th><th>الكمية</th><th>سعر الوحدة</th></tr></thead>
+                            <tbody>
+                            {% for item in sale.items.all %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>{{ item.product.quantity }}</td>
+                                    <td><input class="form-control" type="number" step="0.01" min="0" name="item_{{ item.id }}_quantity" value="{{ item.quantity }}"></td>
+                                    <td><input class="form-control" type="number" step="0.01" min="0" name="item_{{ item.id }}_unit_price" value="{{ item.unit_price }}"></td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="4" class="text-center">لا توجد عناصر في الفاتورة</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-warning mt-3 mb-0">لإزالة منتج من الفاتورة اجعل الكمية 0.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card panel form-card">
+                <div class="card-body p-4">
+                    <h5 class="mb-3">بيانات الدفع</h5>
+                    <div class="mb-3">
+                        <label class="form-label">العميل</label>
+                        <select class="form-select" name="customer_id">
+                            <option value="">عميل نقدي</option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if sale.customer_id == customer.id %}selected{% endif %}>{{ customer.name }} - {{ customer.phone }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">طريقة الدفع</label>
+                        <select class="form-select" name="payment_method">
+                            <option value="cash" {% if sale.payment_method == 'cash' %}selected{% endif %}>نقدي</option>
+                            <option value="card" {% if sale.payment_method == 'card' %}selected{% endif %}>بطاقة</option>
+                            <option value="mada" {% if sale.payment_method == 'mada' %}selected{% endif %}>مدى</option>
+                            <option value="bank_transfer" {% if sale.payment_method == 'bank_transfer' %}selected{% endif %}>تحويل بنكي</option>
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">خصم</label><input class="form-control" type="number" step="0.01" name="discount" value="{{ sale.discount }}"></div>
+                        <div class="col-md-6"><label class="form-label">ضريبة</label><input class="form-control" type="number" step="0.01" name="tax" value="{{ sale.tax }}"></div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">المبلغ المدفوع</label>
+                        <input class="form-control" type="number" step="0.01" name="paid_amount" value="{{ sale.paid_amount }}" required>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea class="form-control" name="notes" rows="3">{{ sale.notes }}</textarea>
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="is_delivery" id="deliveryCheck" {% if sale.is_delivery %}checked{% endif %}>
+                        <label class="form-check-label" for="deliveryCheck">توصيل للمنزل</label>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">عنوان التوصيل</label>
+                        <textarea class="form-control" name="delivery_address" rows="2">{{ sale.delivery_address }}</textarea>
+                    </div>
+                    <div class="form-actions d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary" type="submit">حفظ التعديل</button>
+                        <a class="btn btn-light border" href="{% url 'sales:invoice_detail' sale.invoice_number %}">إلغاء</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
