@@ -308,7 +308,10 @@ class Command(BaseCommand):
         User = get_user_model()
         admin_user = User.objects.filter(is_superuser=True).first() or User.objects.first()
         if not admin_user:
-            admin_user = User.objects.create_superuser('admin_seed', 'admin_seed@example.com', 'Admin@12345')
+            admin_user = User.objects.create_user('seed_operator', email='seed_operator@example.com')
+            admin_user.set_unusable_password()
+            admin_user.is_staff = True
+            admin_user.save(update_fields=['password', 'is_staff'])
 
         products = list(Product.objects.filter(is_active=True))
         customers = list(Customer.objects.all())

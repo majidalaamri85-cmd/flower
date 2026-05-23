@@ -35,8 +35,8 @@
                     <option value="card" {% if selected_payment == 'card' %}selected{% endif %}>بطاقة</option>
                 </select>
             </div>
-            <div class="col-md-2"><input type="date" name="date_from" class="form-control" value="{{ date_from }}"></div>
-            <div class="col-md-2"><input type="date" name="date_to" class="form-control" value="{{ date_to }}"></div>
+            <div class="col-md-2"><input type="date" name="date_from" class="form-control" value="{{ date_from|default_if_none:'' }}"></div>
+            <div class="col-md-2"><input type="date" name="date_to" class="form-control" value="{{ date_to|default_if_none:'' }}"></div>
             <div class="col-md-2"><button class="btn btn-outline-primary w-100">فلترة</button></div>
         </form>
     </div>
