@@ -32,6 +32,10 @@ if 'testserver' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('testserver')
 
 
+# Keep implicit primary keys compatible with the existing migrations/database.
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
 # Application definition
 
 INSTALLED_APPS = [
