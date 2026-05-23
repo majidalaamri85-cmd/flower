@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-<div class="card panel">
+<div class="card panel form-card">
     <div class="card-body p-4">
         <h4 class="mb-3">{{ title }}</h4>
-        <form method="post">
+        <form method="post" class="stacked-form">
             {% csrf_token %}
             <div class="mb-3"><label class="form-label">اسم الفئة</label>{{ form.name }}</div>
             <div class="mb-3"><label class="form-label">نوع الفئة</label>{{ form.category_type }}</div>
             <div class="mb-3"><label class="form-label">الوصف</label>{{ form.description }}</div>
-            <div class="row g-2">
+            <div class="row g-3">
                 <div class="col-md-6"><label class="form-label">أيقونة</label>{{ form.icon }}</div>
                 <div class="col-md-6"><label class="form-label">لون</label>{{ form.color }}</div>
             </div>
@@ -17,7 +17,7 @@
                 {{ form.is_active }}
                 <label class="form-check-label" for="{{ form.is_active.id_for_label }}">فعالة</label>
             </div>
-            <div class="d-flex gap-2">
+            <div class="form-actions d-flex gap-2 flex-wrap">
                 <a href="{% url 'accounts:expense_category_list' %}" class="btn btn-secondary">إلغاء</a>
                 <button class="btn btn-primary" type="submit">حفظ</button>
             </div>

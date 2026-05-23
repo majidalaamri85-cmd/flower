@@ -8,7 +8,7 @@
 </div>
 
 <div class="card panel filter-panel mb-3"><div class="card-body">
-    <form method="get" class="row g-2">
+    <form method="get" class="row g-3 align-items-end">
         <div class="col-md-3"><input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}"></div>
         <div class="col-md-2"><button class="btn btn-primary w-100">عرض</button></div>
     </form>
@@ -24,7 +24,8 @@
 <div class="card panel table-surface">
     <div class="card-body">
         <h5 class="mb-3">أفضل المنتجات</h5>
-        <table class="table table-striped">
+        <div class="table-responsive">
+        <table class="table table-hover align-middle">
             <thead><tr><th>المنتج</th><th>النوع</th><th>الكمية</th><th>الإيراد</th></tr></thead>
             <tbody>
                 {% for item in top_products %}
@@ -32,6 +33,7 @@
                 {% empty %}<tr><td colspan="4">لا توجد بيانات</td></tr>{% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endblock %}

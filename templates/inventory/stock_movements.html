@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}سجل حركة المخزون{% endblock %}
 {% block content %}
-<div class="card panel mb-3">
+<div class="card panel filter-panel mb-3">
     <div class="card-body">
-        <form method="get" class="row g-2">
+        <form method="get" class="row g-3 align-items-end">
             <div class="col-md-3">
                 <select name="product" class="form-select">
                     <option value="">كل المنتجات</option>
@@ -18,9 +18,10 @@
     </div>
 </div>
 
-<div class="card panel">
+<div class="card panel table-surface">
     <div class="card-body">
-        <table class="table table-striped">
+        <div class="table-responsive">
+        <table class="table table-hover align-middle">
             <thead><tr><th>المنتج</th><th>النوع</th><th>الكمية</th><th>المرجع</th><th>المستخدم</th><th>التاريخ</th></tr></thead>
             <tbody>
                 {% for movement in movements %}
@@ -37,6 +38,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endblock %}

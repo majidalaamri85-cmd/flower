@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-<div class="card panel"><div class="card-body p-4">
+<div class="card panel table-surface"><div class="card-body p-4">
     <h3 class="mb-3">{{ title }}</h3>
-    <table class="table">
+    <div class="table-responsive">
+    <table class="table table-hover align-middle">
         <thead><tr><th>اليوم</th><th>الإجمالي</th><th>العدد</th></tr></thead>
         <tbody>
         {% for row in daily_totals %}
@@ -11,5 +12,6 @@
         {% empty %}<tr><td colspan="3">لا توجد بيانات</td></tr>{% endfor %}
         </tbody>
     </table>
+    </div>
 </div></div>
 {% endblock %}

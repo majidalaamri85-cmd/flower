@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
 {% block title %}الورود التي تنتهي قريباً{% endblock %}
 {% block content %}
-<div class="card panel">
+<div class="card panel table-surface">
     <div class="card-body p-4">
         <h3 class="mb-3">الورود التي تنتهي خلال 24 ساعة</h3>
-        <table class="table table-striped">
+        <div class="table-responsive">
+        <table class="table table-hover align-middle">
             <thead><tr><th>المنتج</th><th>تاريخ القطف</th><th>الساعات المتبقية</th></tr></thead>
             <tbody>
                 {% for row in expiring_flowers %}
@@ -18,6 +19,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endblock %}
