@@ -23,3 +23,5 @@ tablib==3.9.0
 tzdata==2026.2
 whitenoise==6.12.0
 boto3==1.35.66
+arabic-reshaper==3.0.0
+python-bidi==0.4.2

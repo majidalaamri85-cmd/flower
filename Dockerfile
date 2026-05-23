@@ -5,6 +5,7 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
     gcc \
+    fonts-dejavu-core \
     libpq-dev \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*

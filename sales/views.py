@@ -1,8 +1,12 @@
 import json
+import os
 from decimal import Decimal
 from io import BytesIO
 from datetime import timedelta
 
+import arabic_reshaper
+from bidi.algorithm import get_display
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -15,6 +19,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from core.models import ShopSettings
@@ -26,6 +32,61 @@ from django.forms import modelform_factory
 
 CustomerForm = modelform_factory(Customer, fields=['name', 'phone', 'email', 'address'])
 BundleOfferForm = modelform_factory(BundleOffer, fields=['name', 'flower_product', 'chocolate_product', 'flower_quantity', 'chocolate_quantity', 'bundle_price', 'regular_price', 'start_date', 'end_date', 'is_active'])
+
+
+_PDF_FONT_REGISTERED = False
+_PDF_FONT_REGULAR = 'Helvetica'
+_PDF_FONT_BOLD = 'Helvetica-Bold'
+
+
+def _first_existing_path(paths):
+	for path in paths:
+		if path and os.path.exists(path):
+			return path
+	return None
+
+
+def _register_pdf_fonts():
+	global _PDF_FONT_REGISTERED, _PDF_FONT_REGULAR, _PDF_FONT_BOLD
+	if _PDF_FONT_REGISTERED:
+		return
+
+	regular_path = _first_existing_path([
+		os.environ.get('INVOICE_FONT_PATH'),
+		os.path.join(settings.BASE_DIR, 'static', 'fonts', 'DejaVuSans.ttf'),
+		'/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+		'/usr/local/share/fonts/DejaVuSans.ttf',
+		r'C:\Windows\Fonts\tahoma.ttf',
+		r'C:\Windows\Fonts\arial.ttf',
+	])
+	bold_path = _first_existing_path([
+		os.environ.get('INVOICE_BOLD_FONT_PATH'),
+		os.path.join(settings.BASE_DIR, 'static', 'fonts', 'DejaVuSans-Bold.ttf'),
+		'/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+		'/usr/local/share/fonts/DejaVuSans-Bold.ttf',
+		r'C:\Windows\Fonts\tahomabd.ttf',
+		r'C:\Windows\Fonts\arialbd.ttf',
+		regular_path,
+	])
+
+	if regular_path:
+		pdfmetrics.registerFont(TTFont('InvoiceArabic', regular_path))
+		_PDF_FONT_REGULAR = 'InvoiceArabic'
+	if bold_path:
+		pdfmetrics.registerFont(TTFont('InvoiceArabicBold', bold_path))
+		_PDF_FONT_BOLD = 'InvoiceArabicBold'
+	_PDF_FONT_REGISTERED = True
+
+
+def _pdf_text(value):
+	text = '' if value is None else str(value)
+	if any('\u0600' <= char <= '\u06ff' for char in text):
+		return get_display(arabic_reshaper.reshape(text))
+	return text
+
+
+def _pdf_paragraph(value, style):
+	return Paragraph(_pdf_text(value), style)
 
 
 def _cart(request):
@@ -235,43 +296,92 @@ def invoice_detail(request, invoice_number):
 @login_required
 def invoice_pdf(request, invoice_number):
 	sale = get_object_or_404(Sale.objects.prefetch_related('items__product').select_related('customer', 'employee'), invoice_number=invoice_number)
+	_register_pdf_fonts()
 	buffer = BytesIO()
-	doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2 * cm, leftMargin=2 * cm, topMargin=2 * cm, bottomMargin=2 * cm)
+	doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5 * cm, leftMargin=1.5 * cm, topMargin=1.5 * cm, bottomMargin=1.5 * cm)
 	styles = getSampleStyleSheet()
-	elements = [Paragraph(f'فاتورة رقم {sale.invoice_number}', styles['Heading1']), Spacer(1, 12)]
+	title_style = ParagraphStyle('InvoiceTitle', parent=styles['Heading1'], fontName=_PDF_FONT_BOLD, alignment=2, fontSize=18, leading=24, textColor=colors.HexColor('#243042'))
+	normal_style = ParagraphStyle('InvoiceNormal', parent=styles['Normal'], fontName=_PDF_FONT_REGULAR, alignment=2, fontSize=10, leading=15)
+	bold_style = ParagraphStyle('InvoiceBold', parent=normal_style, fontName=_PDF_FONT_BOLD)
+	footer_style = ParagraphStyle('InvoiceFooter', parent=normal_style, alignment=1, fontName=_PDF_FONT_BOLD, textColor=colors.HexColor('#4f8a5b'))
+	elements = [_pdf_paragraph(f'فاتورة رقم {sale.invoice_number}', title_style), Spacer(1, 12)]
 
 	shop = ShopSettings.objects.first()
 	if shop:
-		elements.append(Paragraph(f'<b>{shop.shop_name}</b><br/>هاتف: {shop.phone}<br/>البريد: {shop.email}<br/>العنوان: {shop.address}', styles['Normal']))
+		shop_data = [
+			[_pdf_paragraph(shop.shop_name, bold_style), _pdf_paragraph('اسم المحل', normal_style)],
+			[_pdf_paragraph(shop.phone, normal_style), _pdf_paragraph('الهاتف', normal_style)],
+			[_pdf_paragraph(shop.email, normal_style), _pdf_paragraph('البريد', normal_style)],
+			[_pdf_paragraph(shop.address, normal_style), _pdf_paragraph('العنوان', normal_style)],
+		]
+		shop_table = Table(shop_data, colWidths=[11 * cm, 4 * cm], hAlign='RIGHT')
+		shop_table.setStyle(TableStyle([
+			('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fffaf2')),
+			('BOX', (0, 0), (-1, -1), .6, colors.HexColor('#eadde2')),
+			('INNERGRID', (0, 0), (-1, -1), .4, colors.HexColor('#eadde2')),
+			('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+			('RIGHTPADDING', (0, 0), (-1, -1), 8),
+			('LEFTPADDING', (0, 0), (-1, -1), 8),
+		]))
+		elements.append(shop_table)
 		elements.append(Spacer(1, 12))
 
 	customer_name = sale.customer.name if sale.customer else 'عميل نقدي'
 	employee_name = sale.employee.get_full_name() if sale.employee and sale.employee.get_full_name() else (sale.employee.username if sale.employee else '-')
-	elements.append(Paragraph(f'العميل: {customer_name}<br/>التاريخ: {sale.created_at:%Y-%m-%d %H:%M}<br/>الموظف: {employee_name}', styles['Normal']))
+	meta_data = [
+		[_pdf_paragraph(customer_name, normal_style), _pdf_paragraph('العميل', bold_style)],
+		[_pdf_paragraph(f'{sale.created_at:%Y-%m-%d %H:%M}', normal_style), _pdf_paragraph('التاريخ', bold_style)],
+		[_pdf_paragraph(employee_name, normal_style), _pdf_paragraph('الموظف', bold_style)],
+	]
+	meta_table = Table(meta_data, colWidths=[11 * cm, 4 * cm], hAlign='RIGHT')
+	meta_table.setStyle(TableStyle([
+		('BOX', (0, 0), (-1, -1), .6, colors.HexColor('#eadde2')),
+		('INNERGRID', (0, 0), (-1, -1), .4, colors.HexColor('#eadde2')),
+		('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+		('BACKGROUND', (1, 0), (1, -1), colors.HexColor('#eff8ef')),
+		('RIGHTPADDING', (0, 0), (-1, -1), 8),
+		('LEFTPADDING', (0, 0), (-1, -1), 8),
+	]))
+	elements.append(meta_table)
 	elements.append(Spacer(1, 12))
 
-	table_data = [['المنتج', 'الكمية', 'سعر الوحدة', 'الإجمالي']]
+	table_data = [[
+		_pdf_paragraph('الإجمالي', bold_style),
+		_pdf_paragraph('سعر الوحدة', bold_style),
+		_pdf_paragraph('الكمية', bold_style),
+		_pdf_paragraph('المنتج', bold_style),
+	]]
 	for item in sale.items.all():
-		table_data.append([item.product.name, str(item.quantity), f'{item.unit_price} ريال', f'{item.total} ريال'])
+		table_data.append([
+			_pdf_paragraph(f'{item.total} ريال', normal_style),
+			_pdf_paragraph(f'{item.unit_price} ريال', normal_style),
+			_pdf_paragraph(item.quantity, normal_style),
+			_pdf_paragraph(item.product.name, normal_style),
+		])
 	table_data.extend([
-		['', '', 'المجموع الفرعي', f'{sale.subtotal} ريال'],
-		['', '', 'الخصم', f'{sale.discount} ريال'],
-		['', '', 'الضريبة', f'{sale.tax} ريال'],
-		['', '', 'الإجمالي', f'{sale.total} ريال'],
-		['', '', 'المدفوع', f'{sale.paid_amount} ريال'],
-		['', '', 'الباقي', f'{sale.change_amount} ريال'],
+		[_pdf_paragraph(f'{sale.subtotal} ريال', normal_style), _pdf_paragraph('المجموع الفرعي', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.discount} ريال', normal_style), _pdf_paragraph('الخصم', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.tax} ريال', normal_style), _pdf_paragraph('الضريبة', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.total} ريال', bold_style), _pdf_paragraph('الإجمالي', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.paid_amount} ريال', normal_style), _pdf_paragraph('المدفوع', bold_style), '', ''],
+		[_pdf_paragraph(f'{sale.change_amount} ريال', normal_style), _pdf_paragraph('الباقي', bold_style), '', ''],
 	])
-	table = Table(table_data, colWidths=[6 * cm, 3 * cm, 4 * cm, 4 * cm])
+	table = Table(table_data, colWidths=[3.5 * cm, 3.5 * cm, 2.5 * cm, 6.5 * cm], hAlign='RIGHT')
 	table.setStyle(TableStyle([
-		('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+		('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4f8a5b')),
 		('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-		('GRID', (0, 0), (-1, -1), 1, colors.black),
+		('BACKGROUND', (0, -3), (1, -3), colors.HexColor('#fff1f5')),
+		('GRID', (0, 0), (-1, -1), .5, colors.HexColor('#eadde2')),
 		('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-		('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+		('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+		('FONTNAME', (0, 0), (-1, -1), _PDF_FONT_REGULAR),
+		('FONTNAME', (0, 0), (-1, 0), _PDF_FONT_BOLD),
+		('RIGHTPADDING', (0, 0), (-1, -1), 8),
+		('LEFTPADDING', (0, 0), (-1, -1), 8),
 	]))
 	elements.append(table)
 	elements.append(Spacer(1, 20))
-	elements.append(Paragraph('شكراً لتسوقكم معنا', styles['Italic']))
+	elements.append(_pdf_paragraph('شكراً لتسوقكم معنا', footer_style))
 	doc.build(elements)
 	buffer.seek(0)
 	response = HttpResponse(buffer, content_type='application/pdf')
