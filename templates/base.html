@@ -48,6 +48,7 @@
                 <a class="nav-link" href="{% url 'sales:invoice_list' %}"><i class="fa-solid fa-receipt ms-2"></i>الفواتير</a>
                 <a class="nav-link" href="{% url 'accounts:expense_list' %}"><i class="fa-solid fa-wallet ms-2"></i>المصروفات</a>
                 <a class="nav-link" href="{% url 'reports:daily' %}"><i class="fa-solid fa-chart-column ms-2"></i>التقارير</a>
+                <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'smart_analysis' %}active{% endif %}" href="{% url 'reports:smart_analysis' %}"><i class="fa-solid fa-wand-magic-sparkles ms-2"></i>تحليل ذكي</a>
                 <a class="nav-link" href="{% url 'core:settings' %}"><i class="fa-solid fa-gear ms-2"></i>الإعدادات</a>
                 <form method="post" action="{% url 'logout' %}" class="logout-form">{% csrf_token %}
                     <button class="nav-link text-danger logout-link" type="submit"><i class="fa-solid fa-right-from-bracket ms-2"></i>تسجيل خروج</button>
@@ -70,6 +71,7 @@
                 <a class="nav-link" href="{% url 'sales:invoice_list' %}"><i class="fa-solid fa-receipt ms-2"></i>الفواتير</a>
                 <a class="nav-link" href="{% url 'accounts:expense_list' %}"><i class="fa-solid fa-wallet ms-2"></i>المصروفات</a>
                 <a class="nav-link" href="{% url 'reports:daily' %}"><i class="fa-solid fa-chart-column ms-2"></i>التقارير</a>
+                <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'smart_analysis' %}active{% endif %}" href="{% url 'reports:smart_analysis' %}"><i class="fa-solid fa-wand-magic-sparkles ms-2"></i>تحليل ذكي</a>
                 <a class="nav-link" href="{% url 'core:settings' %}"><i class="fa-solid fa-gear ms-2"></i>الإعدادات</a>
                 <form method="post" action="{% url 'logout' %}" class="logout-form">{% csrf_token %}
                     <button class="nav-link text-danger logout-link" type="submit"><i class="fa-solid fa-right-from-bracket ms-2"></i>تسجيل خروج</button>

@@ -872,6 +872,33 @@ main {
   background: linear-gradient(90deg, rgba(255, 224, 166, .16), transparent 45%);
 }
 
+.smart-insight {
+  padding: 1rem;
+  margin-bottom: .85rem;
+  border: 1px solid rgba(234, 221, 226, .92);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .86);
+}
+
+.smart-insight-success {
+  border-color: rgba(79, 138, 91, .22);
+  background: linear-gradient(135deg, rgba(239, 248, 239, .95), rgba(255, 255, 255, .92));
+}
+
+.smart-insight-warning {
+  border-color: rgba(215, 168, 63, .26);
+  background: linear-gradient(135deg, rgba(255, 250, 242, .98), rgba(255, 255, 255, .92));
+}
+
+.smart-insight-danger {
+  border-color: rgba(217, 95, 132, .24);
+  background: linear-gradient(135deg, rgba(255, 241, 245, .98), rgba(255, 255, 255, .92));
+}
+
+.smart-insight-info {
+  border-color: rgba(36, 48, 66, .12);
+}
+
 .alert {
   border-radius: 18px;
   border: 1px solid rgba(234, 221, 226, .85);

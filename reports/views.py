@@ -8,8 +8,24 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from accounts.models import Expense
-from inventory.models import StockMovement
+from inventory.models import Product, StockMovement
 from sales.models import Sale, SaleItem
+
+
+def _percent_change(current, previous):
+	current = float(current or 0)
+	previous = float(previous or 0)
+	if previous == 0:
+		return 100 if current > 0 else 0
+	return ((current - previous) / previous) * 100
+
+
+def _trend_label(change):
+	if change > 5:
+		return 'صاعد'
+	if change < -5:
+		return 'هابط'
+	return 'مستقر'
 
 
 @login_required
@@ -190,5 +206,99 @@ def profit_loss(request):
 			'gross_margin': gross_margin,
 			'operating_expenses': operating_expenses,
 			'net_profit': net_profit,
+		},
+	)
+
+
+@login_required
+def smart_analysis(request):
+	today = timezone.localdate()
+	now = timezone.now()
+	current_start = timezone.make_aware(datetime.combine(today - timedelta(days=29), datetime.min.time()))
+	previous_start = current_start - timedelta(days=30)
+	previous_end = current_start - timedelta(microseconds=1)
+
+	current_sales = Sale.objects.filter(created_at__gte=current_start)
+	previous_sales = Sale.objects.filter(created_at__range=[previous_start, previous_end])
+	current_revenue = current_sales.aggregate(total=Sum('total'))['total'] or 0
+	previous_revenue = previous_sales.aggregate(total=Sum('total'))['total'] or 0
+	revenue_change = _percent_change(current_revenue, previous_revenue)
+
+	current_expenses = Expense.objects.filter(expense_date__gte=current_start.date())
+	previous_expenses = Expense.objects.filter(expense_date__range=[previous_start.date(), previous_end.date()])
+	current_expense_total = current_expenses.aggregate(total=Sum('amount'))['total'] or 0
+	previous_expense_total = previous_expenses.aggregate(total=Sum('amount'))['total'] or 0
+	expense_change = _percent_change(current_expense_total, previous_expense_total)
+
+	cogs = (
+		SaleItem.objects.filter(sale__created_at__gte=current_start)
+		.annotate(cogs_line=ExpressionWrapper(F('quantity') * F('product__purchase_price'), output_field=DecimalField(max_digits=14, decimal_places=2)))
+		.aggregate(total=Sum('cogs_line'))['total']
+		or 0
+	)
+	gross_profit = current_revenue - cogs
+	net_profit = gross_profit - current_expense_total
+	profit_margin = (net_profit / current_revenue * 100) if current_revenue else 0
+	avg_invoice = current_revenue / current_sales.count() if current_sales.count() else 0
+
+	top_products = (
+		SaleItem.objects.filter(sale__created_at__gte=current_start)
+		.values('product__name')
+		.annotate(total_quantity=Sum('quantity'), total_revenue=Sum('total'))
+		.order_by('-total_revenue')[:5]
+	)
+	top_expense = (
+		current_expenses
+		.values('category__name')
+		.annotate(total=Sum('amount'))
+		.order_by('-total')
+		.first()
+	)
+	low_stock = Product.objects.filter(is_active=True, quantity__lte=F('min_stock')).order_by('quantity')[:6]
+	slow_products = (
+		Product.objects
+		.filter(is_active=True)
+		.exclude(saleitem__sale__created_at__gte=current_start)
+		.order_by('-quantity')[:6]
+	)
+
+	insights = []
+	if revenue_change > 10:
+		insights.append({'level': 'success', 'title': 'المبيعات تتحسن', 'text': f'الإيرادات ارتفعت {revenue_change:.1f}% مقارنة بالفترة السابقة.'})
+	elif revenue_change < -10:
+		insights.append({'level': 'danger', 'title': 'انخفاض في المبيعات', 'text': f'الإيرادات انخفضت {abs(revenue_change):.1f}%، راجع المنتجات الأكثر طلبًا والعروض.'})
+	else:
+		insights.append({'level': 'info', 'title': 'المبيعات مستقرة', 'text': 'الإيرادات قريبة من الفترة السابقة، ويمكن تحسينها بعرض محدود على المنتجات الراكدة.'})
+
+	if expense_change > 15:
+		insights.append({'level': 'warning', 'title': 'المصروفات مرتفعة', 'text': f'المصروفات زادت {expense_change:.1f}%، راقب أكبر بند مصروفات خلال هذه الفترة.'})
+	if profit_margin < 15 and current_revenue:
+		insights.append({'level': 'warning', 'title': 'هامش الربح يحتاج انتباه', 'text': f'هامش صافي الربح {profit_margin:.1f}%، قد تحتاج لمراجعة التسعير أو تكلفة الشراء.'})
+	if low_stock:
+		insights.append({'level': 'danger', 'title': 'تنبيه مخزون', 'text': f'يوجد {Product.objects.filter(is_active=True, quantity__lte=F("min_stock")).count()} منتج عند الحد الأدنى أو أقل.'})
+	if not current_sales.exists():
+		insights.append({'level': 'info', 'title': 'لا توجد مبيعات حديثة', 'text': 'ابدأ بإضافة مبيعات من نقطة البيع حتى تظهر تحليلات أدق.'})
+
+	return render(
+		request,
+		'reports/smart_analysis.html',
+		{
+			'current_revenue': current_revenue,
+			'previous_revenue': previous_revenue,
+			'revenue_change': revenue_change,
+			'revenue_trend': _trend_label(revenue_change),
+			'current_expense_total': current_expense_total,
+			'expense_change': expense_change,
+			'net_profit': net_profit,
+			'gross_profit': gross_profit,
+			'profit_margin': profit_margin,
+			'avg_invoice': avg_invoice,
+			'top_products': top_products,
+			'top_expense': top_expense,
+			'low_stock': low_stock,
+			'slow_products': slow_products,
+			'insights': insights,
+			'period_start': current_start.date(),
+			'period_end': today,
 		},
 	)

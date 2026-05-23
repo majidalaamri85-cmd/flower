@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}تحليل ذكي{% endblock %}
+{% block content %}
+<div class="hero-card page-hero p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <span class="page-kicker">تحليل ذكي</span>
+            <h2 class="mb-1">رؤية تنفيذية للفترة الحالية</h2>
+            <p class="mb-0">من {{ period_start }} إلى {{ period_end }}، ملخص تلقائي لما يحتاج متابعة في المبيعات والمخزون والمصروفات.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="summary-chip">الاتجاه: {{ revenue_trend }}</span>
+            <span class="summary-chip">هامش الربح: {{ profit_margin|floatformat:1 }}%</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-sales"><div class="card-body"><small class="text-muted d-block mb-2">إيرادات 30 يوم</small><strong class="stat-value">{{ current_revenue }} {{ settings.currency_symbol }}</strong><div class="small text-muted mt-2">{{ revenue_change|floatformat:1 }}% عن السابق</div></div></div></div>
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-profit"><div class="card-body"><small class="text-muted d-block mb-2">صافي الربح</small><strong class="stat-value">{{ net_profit }} {{ settings.currency_symbol }}</strong><div class="small text-muted mt-2">إجمالي الربح: {{ gross_profit }} {{ settings.currency_symbol }}</div></div></div></div>
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-alert"><div class="card-body"><small class="text-muted d-block mb-2">المصروفات</small><strong class="stat-value">{{ current_expense_total }} {{ settings.currency_symbol }}</strong><div class="small text-muted mt-2">{{ expense_change|floatformat:1 }}% عن السابق</div></div></div></div>
+    <div class="col-md-3"><div class="card panel stat-tile stat-tile-stock"><div class="card-body"><small class="text-muted d-block mb-2">متوسط الفاتورة</small><strong class="stat-value">{{ avg_invoice|floatformat:2 }} {{ settings.currency_symbol }}</strong><div class="small text-muted mt-2">قيمة كل عملية بيع تقريبًا</div></div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="card panel">
+            <div class="card-body p-4">
+                <h5 class="mb-3">التوصيات والتنبيهات</h5>
+                {% for insight in insights %}
+                <div class="smart-insight smart-insight-{{ insight.level }}">
+                    <strong>{{ insight.title }}</strong>
+                    <p class="mb-0">{{ insight.text }}</p>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">لا توجد تنبيهات حالياً.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card panel table-surface">
+            <div class="card-body p-4">
+                <h5 class="mb-3">أفضل المنتجات</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead><tr><th>المنتج</th><th>الكمية</th><th>الإيراد</th></tr></thead>
+                        <tbody>
+                        {% for product in top_products %}
+                            <tr><td>{{ product.product__name }}</td><td>{{ product.total_quantity }}</td><td>{{ product.total_revenue }} {{ settings.currency_symbol }}</td></tr>
+                        {% empty %}
+                            <tr><td colspan="3" class="text-center">لا توجد مبيعات حديثة</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if top_expense %}
+                <div class="alert alert-warning mt-3 mb-0">أكبر بند مصروفات: {{ top_expense.category__name }} - {{ top_expense.total }} {{ settings.currency_symbol }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card panel table-surface">
+            <div class="card-body p-4">
+                <h5 class="mb-3">منتجات تحتاج إعادة طلب</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead><tr><th>المنتج</th><th>المتاح</th><th>الحد الأدنى</th></tr></thead>
+                        <tbody>
+                        {% for product in low_stock %}
+                            <tr class="inventory-row-warning"><td>{{ product.name }}</td><td>{{ product.quantity }}</td><td>{{ product.min_stock }}</td></tr>
+                        {% empty %}
+                            <tr><td colspan="3" class="text-center">المخزون بحالة جيدة</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card panel table-surface">
+            <div class="card-body p-4">
+                <h5 class="mb-3">منتجات راكدة آخر 30 يوم</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th></tr></thead>
+                        <tbody>
+                        {% for product in slow_products %}
+                            <tr><td>{{ product.name }}</td><td>{{ product.quantity }}</td><td>{{ product.selling_price }} {{ settings.currency_symbol }}</td></tr>
+                        {% empty %}
+                            <tr><td colspan="3" class="text-center">لا توجد منتجات راكدة واضحة</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
