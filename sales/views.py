@@ -147,6 +147,35 @@ def search_product(request):
 
 
 @login_required
+def search_by_barcode(request):
+	barcode = request.GET.get('barcode', '').strip()
+	if not barcode:
+		return JsonResponse({'success': False, 'error': 'الباركود مطلوب'}, status=400)
+
+	product = (
+		Product.objects
+		.filter(Q(barcode=barcode) | Q(sku=barcode), is_active=True)
+		.first()
+	)
+	if not product:
+		return JsonResponse({'success': False, 'error': 'المنتج غير موجود'}, status=404)
+	if product.quantity <= 0:
+		return JsonResponse({'success': False, 'error': 'المنتج غير متوفر في المخزون'}, status=400)
+
+	return JsonResponse({
+		'success': True,
+		'product': {
+			'id': product.pk,
+			'name': product.name,
+			'sku': product.sku,
+			'barcode': product.barcode,
+			'quantity': str(product.quantity),
+			'selling_price': str(product.selling_price),
+		},
+	})
+
+
+@login_required
 @csrf_exempt
 def add_to_cart(request):
 	if request.method != 'POST':

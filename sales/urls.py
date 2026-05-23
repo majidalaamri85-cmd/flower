@@ -9,6 +9,7 @@ urlpatterns = [
     path('pos/', views.pos, name='pos'),
     path('pos-offline/', views.pos_offline, name='pos_offline'),
     path('search-product/', views.search_product, name='search_product'),
+    path('search-by-barcode/', views.search_by_barcode, name='search_by_barcode'),
     path('add-to-cart/', views.add_to_cart, name='add_to_cart'),
     path('remove-from-cart/', views.remove_from_cart, name='remove_from_cart'),
     path('update-cart/', views.update_cart, name='update_cart'),

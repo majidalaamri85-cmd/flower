@@ -1,6 +1,8 @@
 from decimal import Decimal
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
 from inventory.models import Product
 
@@ -77,3 +79,58 @@ class BundleOfferModelTests(TestCase):
 		)
 
 		self.assertEqual(bundle.savings, Decimal('10.00'))
+
+
+class BarcodeSearchTests(TestCase):
+	def setUp(self):
+		User = get_user_model()
+		self.user = User.objects.create_user(username='cashier', password='pass12345')
+		self.client.force_login(self.user)
+
+	def test_search_by_barcode_returns_product(self):
+		product = Product.objects.create(
+			name='Barcode Rose',
+			type='flower',
+			sku='SKU-BAR-1',
+			barcode='123456789012',
+			quantity=Decimal('5'),
+			purchase_price=Decimal('10.00'),
+			selling_price=Decimal('15.00'),
+		)
+
+		response = self.client.get(reverse('sales:search_by_barcode'), {'barcode': product.barcode})
+
+		self.assertEqual(response.status_code, 200)
+		self.assertTrue(response.json()['success'])
+		self.assertEqual(response.json()['product']['id'], product.pk)
+
+	def test_search_by_barcode_accepts_sku(self):
+		product = Product.objects.create(
+			name='SKU Chocolate',
+			type='chocolate',
+			sku='SKU-CH-1',
+			quantity=Decimal('2'),
+			purchase_price=Decimal('12.00'),
+			selling_price=Decimal('20.00'),
+		)
+
+		response = self.client.get(reverse('sales:search_by_barcode'), {'barcode': product.sku})
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()['product']['id'], product.pk)
+
+	def test_search_by_barcode_rejects_out_of_stock_product(self):
+		product = Product.objects.create(
+			name='Empty Gift',
+			type='gift',
+			sku='SKU-GF-0',
+			barcode='000000000001',
+			quantity=Decimal('0'),
+			purchase_price=Decimal('10.00'),
+			selling_price=Decimal('30.00'),
+		)
+
+		response = self.client.get(reverse('sales:search_by_barcode'), {'barcode': product.barcode})
+
+		self.assertEqual(response.status_code, 400)
+		self.assertFalse(response.json()['success'])

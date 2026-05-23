@@ -22,6 +22,15 @@
                     <h5 class="mb-1">اختيار المنتجات</h5>
                     <p class="text-muted mb-0">استخدم البحث أو الفلترة للوصول السريع للصنف المناسب.</p>
                 </div>
+                <div class="barcode-scan-panel mb-3">
+                    <label class="form-label" for="barcodeInput">قارئ الباركود</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-barcode"></i></span>
+                        <input id="barcodeInput" class="form-control" inputmode="numeric" autocomplete="off" placeholder="امسح الباركود أو أدخل SKU ثم اضغط Enter">
+                        <button class="btn btn-primary" type="button" onclick="scanBarcode()">إضافة</button>
+                    </div>
+                    <div id="barcodeStatus" class="small text-muted mt-2">جاهز للمسح من قارئ USB.</div>
+                </div>
                 <div class="row g-2 mb-3">
                     <div class="col-md-6"><input id="searchInput" class="form-control" placeholder="بحث عن منتج..."></div>
                     <div class="col-md-3">
@@ -105,8 +114,40 @@ function loadProducts() {
 function addToCart(productId) {
     const quantity = prompt('أدخل الكمية:', '1');
     if (!quantity || Number(quantity) <= 0) return;
+    addProductToCart(productId, quantity);
+}
+function addProductToCart(productId, quantity) {
     fetch('/sales/add-to-cart/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify({product_id: productId, quantity: quantity})})
         .then(r => r.json()).then(data => { if (data.success) location.reload(); else alert(data.error); });
+}
+function setBarcodeStatus(message, type) {
+    const status = document.getElementById('barcodeStatus');
+    status.textContent = message;
+    status.className = `small mt-2 ${type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-muted'}`;
+}
+function scanBarcode() {
+    const input = document.getElementById('barcodeInput');
+    const barcode = input.value.trim();
+    if (!barcode) {
+        setBarcodeStatus('أدخل الباركود أو امسحه أولاً.', 'error');
+        input.focus();
+        return;
+    }
+    setBarcodeStatus('جاري البحث...', 'muted');
+    fetch(`/sales/search-by-barcode/?barcode=${encodeURIComponent(barcode)}`)
+        .then(r => r.json().then(data => ({ok: r.ok, data: data})))
+        .then(({ok, data}) => {
+            if (!ok || !data.success) {
+                setBarcodeStatus(data.error || 'لم يتم العثور على المنتج.', 'error');
+                input.select();
+                return;
+            }
+            setBarcodeStatus(`تم العثور على ${data.product.name}، جاري الإضافة للسلة...`, 'success');
+            addProductToCart(data.product.id, '1');
+        })
+        .catch(() => {
+            setBarcodeStatus('تعذر البحث عن الباركود حالياً.', 'error');
+        });
 }
 function updateCart(productId, quantity) {
     fetch('/sales/update-cart/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify({product_id: productId, quantity: quantity})})
@@ -121,6 +162,12 @@ function scrollToCartPanel() {
 }
 function getCookie(name) { let cookieValue = null; if (document.cookie && document.cookie !== '') { const cookies = document.cookie.split(';'); for (let i = 0; i < cookies.length; i++) { const cookie = cookies[i].trim(); if (cookie.substring(0, name.length + 1) === (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; } } } return cookieValue; }
 document.getElementById('deliveryCheck').addEventListener('change', function(){ document.getElementById('deliveryAddress').classList.toggle('d-none', !this.checked); });
+document.getElementById('barcodeInput').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        scanBarcode();
+    }
+});
 loadProducts();
 </script>
 {% endblock %}

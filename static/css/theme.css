@@ -903,6 +903,23 @@ main {
   min-height: 100%;
 }
 
+.barcode-scan-panel {
+  padding: 1rem;
+  border: 1px solid rgba(217, 95, 132, .16);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 241, 245, .9), rgba(239, 248, 239, .86));
+}
+
+.barcode-scan-panel .input-group-text {
+  color: var(--rose);
+  background: rgba(255, 255, 255, .9);
+}
+
+.barcode-scan-panel .form-control {
+  font-family: Consolas, "Courier New", monospace;
+  letter-spacing: .03em;
+}
+
 .pos-cart-card .card-body {
   background: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(255, 250, 242, .86));
 }
