@@ -1,12 +1,14 @@
 from decimal import Decimal
+from io import StringIO
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
 from inventory.models import Product, StockMovement
 
-from .models import BundleOffer, Sale, SaleItem
+from .models import BundleOffer, Customer, Sale, SaleItem
 
 
 class SaleModelTests(TestCase):
@@ -219,3 +221,23 @@ class SaleEditTests(TestCase):
 		self.assertEqual(sale.total, Decimal('60.00'))
 		self.assertEqual(product.quantity, Decimal('4.00'))
 		self.assertTrue(StockMovement.objects.filter(reference=f'EDIT-{sale.invoice_number}', movement_type='adjust').exists())
+
+
+class PruneInvoicesCommandTests(TestCase):
+	def test_prune_invoices_keeps_latest_five(self):
+		customer = Customer.objects.create(name='Prune Customer', phone='900')
+		for index in range(8):
+			Sale.objects.create(
+				invoice_number=f'PRUNE-{index}',
+				customer=customer,
+				subtotal=Decimal('10.00'),
+				total=Decimal('10.00'),
+				paid_amount=Decimal('10.00'),
+			)
+
+		call_command('prune_invoices', '--keep', '5', '--yes', stdout=StringIO())
+
+		self.assertEqual(Sale.objects.count(), 5)
+		self.assertEqual(Sale.objects.filter(invoice_number__in=['PRUNE-0', 'PRUNE-1', 'PRUNE-2']).count(), 0)
+		customer.refresh_from_db()
+		self.assertEqual(customer.total_purchases, Decimal('50.00'))
