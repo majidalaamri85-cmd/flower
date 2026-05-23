@@ -59,7 +59,6 @@
                     <td>{{ expense.created_by.username|default:'-' }}</td>
                     <td>
                         <div class="btn-group btn-group-sm">
-                            {% if expense.receipt %}<a href="{{ expense.receipt.url }}" target="_blank" class="btn btn-info" title="عرض"><i class="fas fa-file"></i></a>{% endif %}
                             <a href="{% url 'accounts:expense_edit' expense.id %}" class="btn btn-primary" title="تعديل"><i class="fas fa-edit"></i></a>
                             <a href="{% url 'accounts:expense_delete' expense.id %}" class="btn btn-danger" title="حذف"><i class="fas fa-trash"></i></a>
                         </div>

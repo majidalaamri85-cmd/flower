@@ -68,7 +68,7 @@ def expense_list(request):
 @login_required
 def expense_create(request):
 	if request.method == 'POST':
-		form = ExpenseForm(request.POST, request.FILES)
+		form = ExpenseForm(request.POST)
 		if form.is_valid():
 			expense = form.save(commit=False)
 			expense.created_by = request.user
@@ -124,7 +124,7 @@ def get_category_details(request, category_id):
 def expense_edit(request, pk):
 	expense = get_object_or_404(Expense, pk=pk)
 	if request.method == 'POST':
-		form = ExpenseForm(request.POST, request.FILES, instance=expense)
+		form = ExpenseForm(request.POST, instance=expense)
 		if form.is_valid():
 			form.save()
 			messages.success(request, 'تم تعديل المصروف بنجاح')
