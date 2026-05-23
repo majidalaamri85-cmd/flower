@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views
 from . import views_offline
@@ -6,6 +7,7 @@ from . import views_offline
 app_name = 'sales'
 
 urlpatterns = [
+    path('', RedirectView.as_view(pattern_name='sales:pos', permanent=False), name='sales_home'),
     path('pos/', views.pos, name='pos'),
     path('pos-offline/', views.pos_offline, name='pos_offline'),
     path('search-product/', views.search_product, name='search_product'),
