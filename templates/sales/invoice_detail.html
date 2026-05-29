@@ -11,9 +11,7 @@
         <div class="d-flex flex-wrap gap-2">
             <a class="btn btn-outline-primary" href="{% url 'sales:invoice_pdf' sale.invoice_number %}">تحميل PDF</a>
             {% if sale.customer and sale.customer.phone %}
-                {% with phone=sale.customer.phone|regex_replace:'[^0-9]','' %}
-                <a class="btn btn-success" target="_blank" href="https://wa.me/{{ phone }}?text={{ request.build_absolute_uri|slice:':-1' }}{% url 'sales:invoice_pdf' sale.invoice_number %}">إرسال بالواتساب</a>
-                {% endwith %}
+                <a class="btn btn-success" target="_blank" href="https://wa.me/{{ sale.customer.phone }}?text={{ request.build_absolute_uri|slice:':-1' }}{% url 'sales:invoice_pdf' sale.invoice_number %}">إرسال بالواتساب</a>
             {% else %}
                 <a class="btn btn-success" target="_blank" href="https://wa.me/?text={{ request.build_absolute_uri|slice:':-1' }}{% url 'sales:invoice_pdf' sale.invoice_number %}">إرسال بالواتساب</a>
             {% endif %}
