@@ -9,10 +9,11 @@ from bidi.algorithm import get_display
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core import signing
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q, Sum
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -40,6 +41,7 @@ BundleOfferForm = modelform_factory(BundleOffer, fields=['name', 'flower_product
 _PDF_FONT_REGISTERED = False
 _PDF_FONT_REGULAR = 'Helvetica'
 _PDF_FONT_BOLD = 'Helvetica-Bold'
+INVOICE_PDF_SHARE_SALT = 'sales.invoice_pdf.share'
 
 
 def _first_existing_path(paths):
@@ -383,7 +385,8 @@ def invoice_list(request):
 @login_required
 def invoice_detail(request, invoice_number):
 	sale = get_object_or_404(Sale.objects.select_related('customer', 'employee').prefetch_related('items__product'), invoice_number=invoice_number)
-	invoice_pdf_url = request.build_absolute_uri(reverse('sales:invoice_pdf', args=[sale.invoice_number]))
+	share_token = signing.dumps(sale.invoice_number, salt=INVOICE_PDF_SHARE_SALT)
+	invoice_pdf_url = request.build_absolute_uri(reverse('sales:public_invoice_pdf', args=[share_token]))
 	return render(request, 'sales/invoice_detail.html', {'sale': sale, 'invoice_pdf_url': invoice_pdf_url})
 
 
@@ -501,9 +504,7 @@ def invoice_delete(request, invoice_number):
 	return redirect('sales:invoice_list')
 
 
-@login_required
-def invoice_pdf(request, invoice_number):
-	sale = get_object_or_404(Sale.objects.prefetch_related('items__product').select_related('customer', 'employee'), invoice_number=invoice_number)
+def _invoice_pdf_response(sale):
 	_register_pdf_fonts()
 	shop = ShopSettings.objects.first()
 	currency_symbol = shop.currency_symbol if shop and shop.currency_symbol else 'ر.ع'
@@ -596,6 +597,22 @@ def invoice_pdf(request, invoice_number):
 	response = HttpResponse(buffer, content_type='application/pdf')
 	response['Content-Disposition'] = f'attachment; filename="invoice_{sale.invoice_number}.pdf"'
 	return response
+
+
+@login_required
+def invoice_pdf(request, invoice_number):
+	sale = get_object_or_404(Sale.objects.prefetch_related('items__product').select_related('customer', 'employee'), invoice_number=invoice_number)
+	return _invoice_pdf_response(sale)
+
+
+def public_invoice_pdf(request, share_token):
+	try:
+		invoice_number = signing.loads(share_token, salt=INVOICE_PDF_SHARE_SALT)
+	except signing.BadSignature:
+		raise Http404('Invoice not found')
+
+	sale = get_object_or_404(Sale.objects.prefetch_related('items__product').select_related('customer', 'employee'), invoice_number=invoice_number)
+	return _invoice_pdf_response(sale)
 
 
 @login_required

@@ -3,6 +3,7 @@ import json
 from io import StringIO
 
 from django.contrib.auth import get_user_model
+from django.core import signing
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
@@ -10,6 +11,7 @@ from django.urls import reverse
 from inventory.models import Product, StockMovement
 
 from .models import BundleOffer, Customer, Sale, SaleItem
+from .views import INVOICE_PDF_SHARE_SALT
 
 
 class SaleModelTests(TestCase):
@@ -236,6 +238,49 @@ class SaleDeleteTests(TestCase):
 		product.refresh_from_db()
 		self.assertEqual(product.quantity, Decimal('5'))
 		self.assertTrue(StockMovement.objects.filter(reference=f'DELETE-{sale.invoice_number}', movement_type='adjust').exists())
+
+
+class InvoicePdfShareTests(TestCase):
+	def setUp(self):
+		self.product = Product.objects.create(
+			name='Shared Rose',
+			type='flower',
+			quantity=Decimal('3'),
+			purchase_price=Decimal('10.00'),
+			selling_price=Decimal('20.00'),
+		)
+		self.sale = Sale.objects.create(
+			invoice_number='',
+			subtotal=Decimal('20.00'),
+			total=Decimal('20.00'),
+			paid_amount=Decimal('20.00'),
+		)
+		SaleItem.objects.create(
+			sale=self.sale,
+			product=self.product,
+			quantity=Decimal('1'),
+			unit_price=Decimal('20.00'),
+			total=Decimal('20.00'),
+		)
+
+	def test_internal_invoice_pdf_requires_login(self):
+		response = self.client.get(reverse('sales:invoice_pdf', args=[self.sale.invoice_number]))
+
+		self.assertEqual(response.status_code, 302)
+		self.assertIn('/login/', response['Location'])
+
+	def test_public_invoice_pdf_opens_without_login_with_signed_token(self):
+		token = signing.dumps(self.sale.invoice_number, salt=INVOICE_PDF_SHARE_SALT)
+
+		response = self.client.get(reverse('sales:public_invoice_pdf', args=[token]))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response['Content-Type'], 'application/pdf')
+
+	def test_public_invoice_pdf_rejects_bad_token(self):
+		response = self.client.get(reverse('sales:public_invoice_pdf', args=['bad-token']))
+
+		self.assertEqual(response.status_code, 404)
 
 
 class SaleEditTests(TestCase):
