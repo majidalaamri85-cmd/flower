@@ -166,7 +166,7 @@ def search_product(request):
 	product_type = request.GET.get('type', '')
 	products = Product.objects.filter(is_active=True, quantity__gt=0)
 	if query:
-		products = products.filter(Q(name__icontains=query) | Q(sku__icontains=query))
+		products = products.filter(Q(name__icontains=query) | Q(sku__icontains=query) | Q(barcode__icontains=query))
 	if product_type and product_type != 'all':
 		products = products.filter(type=product_type)
 	return render(request, 'sales/partials/product_list.html', {'products': products.order_by('quantity')[:20]})
