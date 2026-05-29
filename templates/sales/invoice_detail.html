@@ -10,7 +10,7 @@
         </div>
         <div class="d-flex flex-wrap gap-2">
                         <a class="btn btn-outline-primary" href="{% url 'sales:invoice_pdf' sale.invoice_number %}">تحميل PDF</a>
-                        <button type="button" class="btn btn-success" onclick="openWhatsAppModal()">إرسال بالواتساب</button>
+                        <button type="button" class="btn btn-success" id="openWhatsAppBtn">إرسال بالواتساب</button>
                         <!-- Modal -->
                         <div class="modal fade" id="whatsappModal" tabindex="-1" aria-labelledby="whatsappModalLabel" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
@@ -77,16 +77,21 @@
     </div>
 </div>
 <script>
-function openWhatsAppModal() {
+
+document.addEventListener('DOMContentLoaded', function() {
+    var openBtn = document.getElementById('openWhatsAppBtn');
     var modalEl = document.getElementById('whatsappModal');
-    var modal = new bootstrap.Modal(modalEl);
-    modal.show();
-    // انتظر حتى يظهر المودال ثم ركز على الحقل
-    setTimeout(function() {
-        var input = document.getElementById('whatsappNumber');
-        if (input) input.focus();
-    }, 400);
-}
+    if (openBtn && modalEl) {
+        openBtn.addEventListener('click', function() {
+            var modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            setTimeout(function() {
+                var input = document.getElementById('whatsappNumber');
+                if (input) input.focus();
+            }, 400);
+        });
+    }
+});
 
 function sendWhatsAppInvoice(e) {
     if (e) e.preventDefault();
