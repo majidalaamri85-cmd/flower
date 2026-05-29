@@ -132,7 +132,7 @@
                             <label class="form-label">طريقة الدفع</label>
                             <select class="form-select" name="payment_method"><option value="cash">نقدي</option><option value="card">بطاقة</option><option value="mada">مدى</option><option value="bank_transfer">تحويل بنكي</option></select>
                         </div>
-                        <div class="col-md-4"><label class="form-label">المبلغ المدفوع</label><input class="form-control" type="number" step="0.01" name="paid_amount" required></div>
+                        <div class="col-md-4"><label class="form-label">المبلغ المدفوع</label><input class="form-control" type="number" step="0.01" name="paid_amount" id="paidAmountInput" required></div>
                         <div class="col-md-4"><label class="form-label">خصم</label><input class="form-control" type="number" step="0.01" name="discount" value="0"></div>
                         <div class="col-md-4"><label class="form-label">ضريبة</label><input class="form-control" type="number" step="0.01" name="tax" value="0"></div>
                         <div class="col-12"><label class="form-label">ملاحظات</label><textarea class="form-control" name="notes" rows="2"></textarea></div>
@@ -259,11 +259,13 @@ async function detectBarcodeFromCamera() {
         const code = String(barcodes[0].rawValue || '').trim();
         if (!code) return;
 
-        stopCameraScanner();
+        // لا توقف الكاميرا بعد المسح، فقط أضف المنتج وامسح الحقل
         const input = document.getElementById('barcodeInput');
         input.value = code;
         setBarcodeStatus(`تمت قراءة الباركود: ${code}`, 'success');
         scanBarcode();
+        // امسح الحقل بعد الإضافة ليكون جاهزاً للمسح التالي
+        setTimeout(() => { input.value = ''; }, 300);
     } catch (error) {
         setBarcodeStatus('تعذرت قراءة الباركود من الكاميرا حالياً.', 'error');
     }
@@ -323,5 +325,19 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 window.addEventListener('beforeunload', stopCameraScanner);
 loadProducts();
+</script>
+<script>
+// عند فتح نافذة إنهاء الطلب، يتم تعبئة المبلغ المدفوع تلقائياً
+document.addEventListener('DOMContentLoaded', function() {
+    var checkoutModal = document.getElementById('checkoutModal');
+    if (checkoutModal) {
+        checkoutModal.addEventListener('show.bs.modal', function() {
+            var paidInput = document.getElementById('paidAmountInput');
+            if (paidInput) {
+                paidInput.value = '{{ cart_total|floatformat:2 }}';
+            }
+        });
+    }
+});
 </script>
 {% endblock %}
