@@ -22,7 +22,6 @@
                                         <div class="modal-body">
                                             <label for="whatsappNumber" class="form-label">رقم الواتساب العماني (يجب أن يبدأ بـ 9689)</label>
                                             <input type="tel" class="form-control" id="whatsappNumber" name="whatsappNumber" placeholder="مثال: 9689xxxxxxx" value="{{ sale.customer.phone|default:'' }}" tabindex="0" autocomplete="off" required pattern="9689\d{7}">
-        }</script>
                                             <div id="whatsappError" class="text-danger small mt-2 d-none"></div>
                                         </div>
                                         <div class="modal-footer">
