@@ -165,6 +165,28 @@ class CartValidationTests(TestCase):
 		self.assertEqual(response.status_code, 400)
 		self.assertIn('Quantity', response.json()['error'])
 
+	def test_add_to_cart_returns_rendered_cart_payload(self):
+		product = Product.objects.create(
+			name='Fast Cart Rose',
+			type='flower',
+			quantity=Decimal('5'),
+			purchase_price=Decimal('10.00'),
+			selling_price=Decimal('20.00'),
+		)
+
+		response = self.client.post(
+			reverse('sales:add_to_cart'),
+			data=json.dumps({'product_id': product.pk, 'quantity': '2'}),
+			content_type='application/json',
+		)
+
+		payload = response.json()
+		self.assertEqual(response.status_code, 200)
+		self.assertTrue(payload['success'])
+		self.assertEqual(payload['cart_count'], 1)
+		self.assertIn('Fast Cart Rose', payload['cart_html'])
+		self.assertEqual(payload['cart_total'], '40.00')
+
 
 class OfflineSyncTests(TestCase):
 	def setUp(self):

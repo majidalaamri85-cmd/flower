@@ -15,6 +15,7 @@ from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
@@ -144,6 +145,22 @@ def _cart_items(request):
 	return items, total
 
 
+def _currency_symbol():
+	shop = ShopSettings.objects.first()
+	return shop.currency_symbol if shop and shop.currency_symbol else 'ر.ع'
+
+
+def _cart_payload(request):
+	items, total = _cart_items(request)
+	return {
+		'success': True,
+		'cart_count': len(items),
+		'cart_total': str(total),
+		'cart_total_display': f'{total} {_currency_symbol()}',
+		'cart_html': render_to_string('sales/partials/cart_items.html', {'cart_items': items}, request=request),
+	}
+
+
 @login_required
 def pos(request):
 	items, total = _cart_items(request)
@@ -152,6 +169,7 @@ def pos(request):
 	return render(request, 'sales/pos.html', {
 		'cart_items': items,
 		'cart_total': total,
+		'cart_total_value': str(total),
 		'active_bundles': active_bundles,
 		'customers': customers,
 	})
@@ -228,7 +246,7 @@ def add_to_cart(request):
 	else:
 		cart[product_id] = {'name': product.name, 'quantity': str(quantity), 'price': str(product.selling_price), 'type': product.type}
 	request.session['cart'] = cart
-	return JsonResponse({'success': True, 'cart_count': len(cart)})
+	return JsonResponse(_cart_payload(request))
 
 
 @login_required
@@ -241,7 +259,7 @@ def remove_from_cart(request):
 	cart = request.session.get('cart', {})
 	cart.pop(str(data.get('product_id')), None)
 	request.session['cart'] = cart
-	return JsonResponse({'success': True})
+	return JsonResponse(_cart_payload(request))
 
 
 @login_required
@@ -265,7 +283,7 @@ def update_cart(request):
 			return JsonResponse({'error': f'الكمية المتوفرة: {product.quantity}'}, status=400)
 		cart[product_id] = {'name': product.name, 'quantity': str(quantity), 'price': str(product.selling_price), 'type': product.type}
 	request.session['cart'] = cart
-	return JsonResponse({'success': True})
+	return JsonResponse(_cart_payload(request))
 
 
 @login_required

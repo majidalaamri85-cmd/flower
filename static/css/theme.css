@@ -994,6 +994,13 @@ main {
   background: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(255, 250, 242, .86));
 }
 
+@media (min-width: 992px) {
+  .pos-cart-card {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
 .cart-item {
   padding: .8rem;
   border: 1px solid rgba(234, 221, 226, .9);
@@ -1001,8 +1008,55 @@ main {
   background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 241, 245, .55));
 }
 
+.cart-item__total {
+  color: var(--leaf);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.cart-item__controls {
+  display: grid;
+  grid-template-columns: 42px minmax(72px, 1fr) 42px auto;
+  gap: .45rem;
+  align-items: center;
+}
+
+.cart-qty-btn,
+.cart-remove-btn {
+  min-height: 38px;
+}
+
+.cart-qty-input {
+  text-align: center;
+}
+
+.cart-empty {
+  display: grid;
+  min-height: 96px;
+  place-items: center;
+  border: 1px dashed rgba(107, 114, 128, .28);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .68);
+}
+
 .cart-total-line {
   font-size: 1.05rem;
+}
+
+.checkout-total-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: .85rem 1rem;
+  border: 1px solid rgba(79, 138, 91, .18);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(239, 248, 239, .95), rgba(255, 255, 255, .95));
+}
+
+.checkout-total-preview strong {
+  color: var(--leaf);
+  font-size: 1.1rem;
 }
 
 .product-type-chip {
@@ -1362,6 +1416,46 @@ main {
 
   .pos-cart-card {
     scroll-margin-top: 90px;
+  }
+
+  .cart-item__controls {
+    grid-template-columns: 44px minmax(64px, 1fr) 44px;
+  }
+
+  .cart-remove-btn {
+    grid-column: 1 / -1;
+  }
+
+  #checkoutModal .modal-dialog {
+    max-width: calc(100vw - 1rem);
+    margin: .5rem auto;
+  }
+
+  #checkoutModal .modal-content {
+    min-height: calc(100vh - 1rem);
+    display: flex;
+    flex-direction: column;
+  }
+
+  #checkoutModal form {
+    min-height: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  #checkoutModal .modal-body {
+    flex: 1 1 auto;
+    max-height: none;
+    overflow-y: auto;
+    padding-bottom: 1rem;
+  }
+
+  #checkoutModal .modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: rgba(255, 255, 255, .98);
+    box-shadow: 0 -10px 24px rgba(36, 48, 66, .08);
   }
 }
 
