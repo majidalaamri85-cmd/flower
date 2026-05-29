@@ -79,28 +79,39 @@
 
 <style>
 @media (max-width: 600px) {
-  #checkoutModal .modal-dialog {
-    max-width: 98vw;
-    margin: 0.5rem auto;
-  }
-  #checkoutModal .modal-content {
-    min-height: 90vh;
-    display: flex;
-    flex-direction: column;
-  }
-  #checkoutModal .modal-body {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    max-height: 60vh;
-    padding-bottom: 1rem;
-  }
-  #checkoutModal .modal-footer {
-    position: sticky;
-    bottom: 0;
-    background: #fff;
-    z-index: 10;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
-  }
+    #checkoutModal .modal-dialog {
+        max-width: 98vw;
+        margin: 0.5rem auto;
+    }
+    #checkoutModal .modal-content {
+        min-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+    #checkoutModal .modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        max-height: 65vh;
+        padding-bottom: 80px;
+        /* مساحة كافية لعدم تغطية الأزرار */
+    }
+    #checkoutModal .modal-footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        background: #fff;
+        z-index: 1055;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+        padding: 12px 16px;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+    }
+    #checkoutModal .modal-content {
+        padding-bottom: 80px;
+    }
 }
 </style>
 <div class="modal fade" id="checkoutModal" tabindex="-1">
