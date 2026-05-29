@@ -24,7 +24,19 @@
 <div class="card panel filter-panel mb-3">
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-5"><input class="form-control" name="search" value="{{ search|default:'' }}" placeholder="بحث بالاسم أو SKU أو باركود"></div>
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-barcode"></i></span>
+                    <input id="barcodeInput" class="form-control" name="search" value="{{ search|default:'' }}" placeholder="بحث بالاسم أو SKU أو باركود" autocomplete="off">
+                    <button class="btn btn-outline-primary" type="button" id="cameraScanButton" onclick="toggleCameraScanner()"><i class="fa-solid fa-camera"></i></button>
+                </div>
+                <div id="barcodeStatus" class="small text-muted mt-2">جاهز للمسح من قارئ USB أو الكاميرا.</div>
+                <div id="cameraScanner" class="camera-scanner mt-3 d-none">
+                    <video id="barcodeVideo" playsinline muted style="width:100%;max-height:220px;"></video>
+                    <div class="camera-scanner__line"></div>
+                    <button class="btn btn-sm btn-light camera-scanner__close mt-2" type="button" onclick="stopCameraScanner()">إيقاف</button>
+                </div>
+            </div>
             <div class="col-md-3">
                 <select name="type" class="form-select">
                     <option value="all">كل الأنواع</option>
@@ -102,4 +114,93 @@
         {% endif %}
     </div>
 </div>
+<script>
+let barcodeDetector = null;
+let cameraStream = null;
+let cameraScanTimer = null;
+let isCameraScanning = false;
+
+async function toggleCameraScanner() {
+    if (isCameraScanning) {
+        stopCameraScanner();
+        return;
+    }
+    await startCameraScanner();
+}
+
+async function startCameraScanner() {
+    if (!('BarcodeDetector' in window)) {
+        setBarcodeStatus('متصفحك لا يدعم المسح بالكاميرا. استخدم قارئ USB أو أدخل الباركود يدوياً.', 'error');
+        return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setBarcodeStatus('الكاميرا غير متاحة من هذا المتصفح.', 'error');
+        return;
+    }
+    try {
+        barcodeDetector = barcodeDetector || new BarcodeDetector({
+            formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code']
+        });
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+            audio: false
+        });
+        const scanner = document.getElementById('cameraScanner');
+        const video = document.getElementById('barcodeVideo');
+        video.srcObject = cameraStream;
+        scanner.classList.remove('d-none');
+        await video.play();
+        isCameraScanning = true;
+        document.getElementById('cameraScanButton').classList.add('active');
+        setBarcodeStatus('وجّه الكاميرا نحو الباركود.', 'muted');
+        cameraScanTimer = window.setInterval(detectBarcodeFromCamera, 350);
+    } catch (error) {
+        stopCameraScanner();
+        setBarcodeStatus('تعذر تشغيل الكاميرا. تأكد من السماح للمتصفح باستخدام الكاميرا وأن الصفحة تعمل عبر HTTPS.', 'error');
+    }
+}
+
+async function detectBarcodeFromCamera() {
+    const video = document.getElementById('barcodeVideo');
+    if (!barcodeDetector || !video || video.readyState < 2) return;
+    try {
+        const barcodes = await barcodeDetector.detect(video);
+        if (!barcodes.length) return;
+        const code = String(barcodes[0].rawValue || '').trim();
+        if (!code) return;
+        stopCameraScanner();
+        const input = document.getElementById('barcodeInput');
+        input.value = code;
+        setBarcodeStatus(`تمت قراءة الباركود: ${code}`, 'success');
+        // أرسل النموذج تلقائياً للبحث
+        input.form.submit();
+    } catch (error) {
+        setBarcodeStatus('تعذرت قراءة الباركود من الكاميرا حالياً.', 'error');
+    }
+}
+
+function stopCameraScanner() {
+    if (cameraScanTimer) {
+        window.clearInterval(cameraScanTimer);
+        cameraScanTimer = null;
+    }
+    if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+    }
+    const video = document.getElementById('barcodeVideo');
+    if (video) video.srcObject = null;
+    const scanner = document.getElementById('cameraScanner');
+    if (scanner) scanner.classList.add('d-none');
+    const button = document.getElementById('cameraScanButton');
+    if (button) button.classList.remove('active');
+    isCameraScanning = false;
+}
+
+function setBarcodeStatus(message, type) {
+    const status = document.getElementById('barcodeStatus');
+    status.textContent = message;
+    status.className = `small mt-2 ${type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-muted'}`;
+}
+</script>
 {% endblock %}
