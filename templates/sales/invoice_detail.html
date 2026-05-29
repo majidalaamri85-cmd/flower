@@ -21,8 +21,8 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <label for="whatsappNumber" class="form-label">رقم الواتساب (بدون صفر أو +)</label>
-                                            <input type="tel" class="form-control" id="whatsappNumber" name="whatsappNumber" placeholder="مثال: 9689xxxxxxx" value="{{ sale.customer.phone|default:'' }}" tabindex="0" autocomplete="off" required pattern="\d{8,15}">
+                                            <label for="whatsappNumber" class="form-label">رقم الواتساب العماني (يجب أن يبدأ بـ 9689)</label>
+                                            <input type="tel" class="form-control" id="whatsappNumber" name="whatsappNumber" placeholder="مثال: 9689xxxxxxx" value="{{ sale.customer.phone|default:'' }}" tabindex="0" autocomplete="off" required pattern="9689\d{7}">
                                             <div id="whatsappError" class="text-danger small mt-2 d-none"></div>
                                         </div>
                                         <div class="modal-footer">
@@ -93,8 +93,8 @@ function sendWhatsAppInvoice(e) {
     var input = document.getElementById('whatsappNumber');
     var errorDiv = document.getElementById('whatsappError');
     var number = input.value.trim();
-    if (!number.match(/^\d{8,15}$/)) {
-        errorDiv.textContent = 'يرجى إدخال رقم صحيح بدون صفر أو +';
+    if (!number.match(/^9689\d{7}$/)) {
+        errorDiv.textContent = 'يرجى إدخال رقم عماني صحيح يبدأ بـ 9689 ويليه 7 أرقام.';
         errorDiv.classList.remove('d-none');
         input.focus();
         return false;
