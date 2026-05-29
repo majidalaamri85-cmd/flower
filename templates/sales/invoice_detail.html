@@ -75,8 +75,14 @@
 </div>
 <script>
 function openWhatsAppModal() {
-    var modal = new bootstrap.Modal(document.getElementById('whatsappModal'));
+    var modalEl = document.getElementById('whatsappModal');
+    var modal = new bootstrap.Modal(modalEl);
     modal.show();
+    // انتظر حتى يظهر المودال ثم ركز على الحقل
+    setTimeout(function() {
+        var input = document.getElementById('whatsappNumber');
+        if (input) input.focus();
+    }, 400);
 }
 
 function sendWhatsAppInvoice(e) {
