@@ -79,17 +79,19 @@ function openWhatsAppModal() {
     modal.show();
 }
 
-function sendWhatsAppInvoice() {
+function sendWhatsAppInvoice(e) {
+    if (e) e.preventDefault();
     var number = document.getElementById('whatsappNumber').value.trim();
     if (!number.match(/^\d{8,15}$/)) {
         alert('يرجى إدخال رقم صحيح بدون صفر أو +');
-        return;
+        return false;
     }
     var url = 'https://wa.me/' + number + '?text={{ request.build_absolute_uri|slice:":-1" }}{% url 'sales:invoice_pdf' sale.invoice_number %}';
     window.open(url, '_blank');
     var modalEl = document.getElementById('whatsappModal');
     var modal = bootstrap.Modal.getInstance(modalEl);
     modal.hide();
+    return false;
 }
 </script>
 {% endblock %}
