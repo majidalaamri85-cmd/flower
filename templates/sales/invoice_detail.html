@@ -21,7 +21,7 @@
                                     </div>
                                     <div class="modal-body">
                                         <label for="whatsappNumber" class="form-label">رقم الواتساب (بدون صفر أو +)</label>
-                                        <input type="tel" class="form-control" id="whatsappNumber" placeholder="مثال: 9689xxxxxxx" value="{{ sale.customer.phone|default:'' }}">
+                                        <input type="tel" class="form-control" id="whatsappNumber" placeholder="مثال: 9689xxxxxxx" value="{{ sale.customer.phone|default:'' }}" tabindex="0" autocomplete="off">
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
