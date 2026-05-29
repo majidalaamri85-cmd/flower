@@ -15,18 +15,21 @@
                         <div class="modal fade" id="whatsappModal" tabindex="-1" aria-labelledby="whatsappModalLabel" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="whatsappModalLabel">إرسال الفاتورة عبر الواتساب</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <label for="whatsappNumber" class="form-label">رقم الواتساب (بدون صفر أو +)</label>
-                                        <input type="tel" class="form-control" id="whatsappNumber" placeholder="مثال: 9689xxxxxxx" value="{{ sale.customer.phone|default:'' }}" tabindex="0" autocomplete="off">
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                                        <button type="button" class="btn btn-success" onclick="sendWhatsAppInvoice()">إرسال</button>
-                                    </div>
+                                    <form id="whatsappForm" onsubmit="return sendWhatsAppInvoice(event)">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="whatsappModalLabel">إرسال الفاتورة عبر الواتساب</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label for="whatsappNumber" class="form-label">رقم الواتساب (بدون صفر أو +)</label>
+                                            <input type="tel" class="form-control" id="whatsappNumber" name="whatsappNumber" placeholder="مثال: 9689xxxxxxx" value="{{ sale.customer.phone|default:'' }}" tabindex="0" autocomplete="off" required pattern="\d{8,15}">
+                                            <div id="whatsappError" class="text-danger small mt-2 d-none"></div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                            <button type="submit" class="btn btn-success">إرسال</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -87,11 +90,16 @@ function openWhatsAppModal() {
 
 function sendWhatsAppInvoice(e) {
     if (e) e.preventDefault();
-    var number = document.getElementById('whatsappNumber').value.trim();
+    var input = document.getElementById('whatsappNumber');
+    var errorDiv = document.getElementById('whatsappError');
+    var number = input.value.trim();
     if (!number.match(/^\d{8,15}$/)) {
-        alert('يرجى إدخال رقم صحيح بدون صفر أو +');
+        errorDiv.textContent = 'يرجى إدخال رقم صحيح بدون صفر أو +';
+        errorDiv.classList.remove('d-none');
+        input.focus();
         return false;
     }
+    errorDiv.classList.add('d-none');
     var url = 'https://wa.me/' + number + '?text={{ request.build_absolute_uri|slice:":-1" }}{% url 'sales:invoice_pdf' sale.invoice_number %}';
     window.open(url, '_blank');
     var modalEl = document.getElementById('whatsappModal');
@@ -100,4 +108,18 @@ function sendWhatsAppInvoice(e) {
     return false;
 }
 </script>
+document.addEventListener('DOMContentLoaded', function() {
+    var openBtn = document.getElementById('openWhatsAppBtn');
+    var modalEl = document.getElementById('whatsappModal');
+    if (openBtn && modalEl) {
+        openBtn.addEventListener('click', function() {
+            var modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            setTimeout(function() {
+                var input = document.getElementById('whatsappNumber');
+                if (input) input.focus();
+            }, 400);
+        });
+    }
+});
 {% endblock %}
