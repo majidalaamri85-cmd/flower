@@ -108,7 +108,8 @@ function sendWhatsAppInvoice(e) {
         return false;
     }
     errorDiv.classList.add('d-none');
-    var url = 'https://wa.me/' + number + '?text={{ request.build_absolute_uri|slice:":-1" }}{% url 'sales:invoice_pdf' sale.invoice_number %}';
+    var invoicePdfUrl = '{{ invoice_pdf_url|escapejs }}';
+    var url = 'https://wa.me/' + number + '?text=' + encodeURIComponent(invoicePdfUrl);
     window.open(url, '_blank');
     var modalEl = document.getElementById('whatsappModal');
     var modal = bootstrap.Modal.getInstance(modalEl);

@@ -14,6 +14,7 @@ from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -382,7 +383,8 @@ def invoice_list(request):
 @login_required
 def invoice_detail(request, invoice_number):
 	sale = get_object_or_404(Sale.objects.select_related('customer', 'employee').prefetch_related('items__product'), invoice_number=invoice_number)
-	return render(request, 'sales/invoice_detail.html', {'sale': sale})
+	invoice_pdf_url = request.build_absolute_uri(reverse('sales:invoice_pdf', args=[sale.invoice_number]))
+	return render(request, 'sales/invoice_detail.html', {'sale': sale, 'invoice_pdf_url': invoice_pdf_url})
 
 
 @login_required
